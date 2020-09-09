@@ -3,7 +3,9 @@
 
 use OxidEsales\Facts\Facts;
 
+/** @var \OxidEsales\TestingLibrary\ServiceCaller $serviceCaller */
 $serviceCaller = oxNew(\OxidEsales\TestingLibrary\ServiceCaller::class);
+/** @var \OxidEsales\TestingLibrary\TestConfig $testConfig */
 $testConfig = oxNew(\OxidEsales\TestingLibrary\TestConfig::class);
 
 $testDirectory = $testConfig->getEditionTestsPath($testConfig->getShopEdition());

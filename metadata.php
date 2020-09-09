@@ -14,14 +14,14 @@ $sMetadataVersion = '2.0';
  * Module information
  */
 $aModule = [
-    'id'            => 'oe/graphql-account',
+    'id'            => 'oe/graphql-checkout',
     'title'         => [
-        'de'        =>  'GraphQL Konto',
-        'en'        =>  'GraphQL Account',
+        'de'        =>  'GraphQL Zur Kasse',
+        'en'        =>  'GraphQL Checkout',
     ],
     'description'   =>  [
-        'de' => '<span>OXID GraphQL Konto</span>',
-        'en' => '<span>OXID GraphQL Account</span>',
+        'de' => '<span>OXID GraphQL Zur Kasse</span>',
+        'en' => '<span>OXID GraphQL Checkout</span>',
     ],
     'thumbnail'   => 'out/pictures/logo.png',
     'version'     => '0.1.0',

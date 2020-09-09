@@ -15,8 +15,8 @@ This assumes you have OXID eShop (at least `oxid-esales/oxideshop_ce: v6.5.0` co
 $ composer require oxid-esales/graphql-checkout
 ```
 
-After requiring the module, you need to head over to the OXID eShop admin and activate the GraphQL Account module. If
-you did not have the `oxid-esales/graphql-base` and `oxid-esales/graphql-catalogue` module already installed, composer
+After requiring the module, you need to head over to the OXID eShop admin and activate the GraphQL Checkout module. If
+you did not have the `oxid-esales/graphql-base`, `oxid-esales/graphql-catalogue` and `oxid-esales/graphql-checkout` modules already installed, composer
 will do that for you, but don't forget to also activate those modules in the OXID eShop admin.
 
 ### How to use

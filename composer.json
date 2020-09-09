@@ -17,7 +17,9 @@
     },
     "require": {
         "php": "^7.1",
-        "oxid-esales/graphql-base": "dev-master"
+        "oxid-esales/graphql-base": "dev-master",
+        "oxid-esales/graphql-catalogue": "dev-master",
+        "oxid-esales/graphql-account": "dev-master"
     },
     "require-dev": {
         "phpunit/phpunit": "^7.5.20|^8.5|^9",
@@ -31,8 +33,8 @@
     "prefer-stable": true,
     "autoload": {
         "psr-4": {
-            "OxidEsales\\GraphQL\\Account\\": "src",
-            "OxidEsales\\GraphQL\\Account\\Tests\\": "tests"
+            "OxidEsales\\GraphQL\\Checkout\\": "src",
+            "OxidEsales\\GraphQL\\Checkout\\Tests\\": "tests"
         }
     },
     "scripts": {

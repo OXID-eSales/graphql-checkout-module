@@ -1,6 +1,6 @@
 # oxid-esales/graphql-checkout
 
-[![Build Status](https://flat.badgen.net/travis/OXID-eSales/graphql-checkout-module/?icon=travis&label=build&cache=300&scale=1.1)](https://travis-ci.com/OXID-eSales/graphql-checkout-module)
+[![Build Status](https://travis-ci.com/OXID-eSales/graphql-checkout-module.svg?branch=master)](https://travis-ci.com/OXID-eSales/graphql-checkout-module)
 [![PHP Version](https://flat.badgen.net/packagist/php/OXID-eSales/graphql-checkout/?cache=300&scale=1.1)](https://github.com/oxid-esales/graphql-checkout-module)
 
 This module provides checkout related [GraphQL](https://www.graphql.org) queries and mutations for the [OXID eShop](https://www.oxid-esales.com/)

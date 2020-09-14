@@ -35,11 +35,13 @@ final class Checkout
         /** @var EshopUserModel $user */
         $user = $customer->getEshopModel();
 
-        /** @var EshopUserBasketModel\ $userBasket */
+        /** @var EshopUserBasketModel $userBasket */
         $userBasket = $basket->getEshopModel();
 
+        //TODO: create EshopBasketModel from EshopUserBasketModel
         $basket = oxNew(EshopBasketModel::class);
 
+        //TODO: we need some matrix for available shipping methods/payments
         $deliverySetList = oxNew(EshopDeliverySetListModel::class);
         list($allSets, $activeShipSet, $paymentList) = $deliverySetList->getDeliverySetData(null, $user, $basket);
         $result = [];

@@ -16,3 +16,8 @@ services:
     OxidEsales\GraphQL\Checkout\Shared\Service\PermissionProvider:
         class: OxidEsales\GraphQL\Checkout\Shared\Service\PermissionProvider
         tags: ['graphql_permission_provider']
+
+    #TODO: Delete when relations are introduced
+    OxidEsales\GraphQL\Checkout\Basket\DataType\Basket:
+        class: OxidEsales\GraphQL\Checkout\Basket\DataType\Basket
+        public: true

@@ -14,6 +14,7 @@ use OxidEsales\GraphQL\Checkout\Tests\Codeception\Acceptance\MultishopBaseCest;
 use OxidEsales\GraphQL\Checkout\Tests\Codeception\AcceptanceTester;
 
 /**
+ * @group oe/graphql-checkout
  * @group address
  * @group basket
  */
@@ -25,22 +26,23 @@ final class DeliveryAddressMultiShopCest extends MultishopBaseCest
 
     private const PASSWORD = 'useruser';
 
-    private const BASKET_ID_1 = 'basket_otheruser_2';
+    private const BASKET_TITLE = 'deliveryaddressbasketmultishop';
 
     private const DELIVERY_ID_1 = 'address_otheruser';
-
-    private const BASKET_ID_2 = 'basket_user_2';
 
     private const DELIVERY_ID_2 = 'address_user';
 
     public function setDeliveryAddressToBasketFromShop1WithUserLoggedInShop2(AcceptanceTester $I): void
     {
-        $I->updateConfigInDatabaseForShops('blMallUsers', true, 'bool', [2]);
+        $I->updateConfigInDatabaseForShops('blMallUsers', true, 'bool', [1, 2]);
+
+        $I->login(self::OTHER_USERNAME, self::PASSWORD, 1);
+        $basketId = $this->basketCreate($I, 1);
 
         $I->login(self::OTHER_USERNAME, self::PASSWORD, 2);
 
         $I->sendGQLQuery(
-            $this->basketSetDeliveryAddress(self::BASKET_ID_1, self::DELIVERY_ID_1),
+            $this->basketSetDeliveryAddress($basketId, self::DELIVERY_ID_1),
             null,
             0,
             2
@@ -54,20 +56,58 @@ final class DeliveryAddressMultiShopCest extends MultishopBaseCest
 
         $I->assertSame('Marc', $basket['owner']['firstName']);
         $I->assertSame(self::DELIVERY_ID_1, $basket['deliveryAddress']['id']);
+
+        $this->basketRemove($I, $basketId, 2);
     }
 
     public function setDeliveryAddressToBasketForShop2(AcceptanceTester $I): void
     {
         $I->login(self::USERNAME, self::PASSWORD, 2);
+        $basketId = $this->basketCreate($I, 2);
 
         $I->sendGQLQuery(
-            $this->basketSetDeliveryAddress(self::BASKET_ID_2, self::DELIVERY_ID_2),
+            $this->basketSetDeliveryAddress($basketId, self::DELIVERY_ID_2),
             null,
             0,
             2
         );
 
         $I->seeResponseCodeIs(HttpCode::NOT_FOUND);
+
+        $this->basketRemove($I, $basketId, 2);
+    }
+
+    private function basketCreate(AcceptanceTester $I, int $shopId)
+    {
+        $I->sendGQLQuery(
+            'mutation {
+                basketCreate(basket: {title: "' . self::BASKET_TITLE . '"}) {
+                    id
+                }
+            }',
+            null,
+            0,
+            $shopId
+        );
+
+        $I->seeResponseCodeIs(HttpCode::OK);
+        $result = $I->grabJsonResponseAsArray();
+
+        return $result['data']['basketCreate']['id'];
+    }
+
+    private function basketRemove($I, string $basketId, int $shopId): void
+    {
+        $I->sendGQLQuery(
+            'mutation {
+                basketRemove (id: "' . $basketId . '")
+            }',
+            null,
+            0,
+            $shopId
+        );
+
+        $I->seeResponseCodeIs(HttpCode::OK);
     }
 
     private function basketSetDeliveryAddress(string $basketId, string $deliveryAddressId): string

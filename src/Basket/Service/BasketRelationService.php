@@ -10,8 +10,8 @@ declare(strict_types=1);
 namespace OxidEsales\GraphQL\Checkout\Basket\Service;
 
 use OxidEsales\GraphQL\Account\Address\DataType\DeliveryAddress;
+use OxidEsales\GraphQL\Account\Address\Service\DeliveryAddress as DeliveryAddressService;
 use OxidEsales\GraphQL\Account\Basket\DataType\Basket;
-use OxidEsales\GraphQL\Checkout\Basket\Service\Basket as BasketService;
 use TheCodingMachine\GraphQLite\Annotations\ExtendType;
 use TheCodingMachine\GraphQLite\Annotations\Field;
 
@@ -20,13 +20,13 @@ use TheCodingMachine\GraphQLite\Annotations\Field;
  */
 final class BasketRelationService
 {
-    /** @var BasketService */
-    private $basketService;
+    /** @var DeliveryAddressService */
+    private $deliveryAddressService;
 
     public function __construct(
-        BasketService $basketService
+        DeliveryAddressService $deliveryAddressService
     ) {
-        $this->basketService = $basketService;
+        $this->deliveryAddressService = $deliveryAddressService;
     }
 
     /**
@@ -36,6 +36,6 @@ final class BasketRelationService
     {
         $addressId = (string) $basket->getEshopModel()->getFieldData('oegql_deladdressid');
 
-        return $this->basketService->getDeliveryAddress($addressId);
+        return $this->deliveryAddressService->getDeliveryAddress($addressId);
     }
 }

@@ -1,5 +1,18 @@
 services:
 
-  _defaults:
-    public: false
-    autowire: true
+    _defaults:
+        public: false
+        autowire: true
+
+    OxidEsales\GraphQL\Checkout\:
+        resource: 'src/*'
+        exclude: 'src/**/{DataType,Exception}'
+        public: true
+
+    OxidEsales\GraphQL\Checkout\Shared\Service\NamespaceMapper:
+        class: OxidEsales\GraphQL\Checkout\Shared\Service\NamespaceMapper
+        tags: ['graphql_namespace_mapper']
+
+    OxidEsales\GraphQL\Checkout\Shared\Service\PermissionProvider:
+        class: OxidEsales\GraphQL\Checkout\Shared\Service\PermissionProvider
+        tags: ['graphql_permission_provider']

@@ -52,20 +52,19 @@ final class SpikeTest extends TokenTestCase
         //Shop offers a list with delivery options and shows the payment options
         //available per delivery option.
         //see PaymentController::getAllSets() and PaymentController::getPaymentList()
-        //
-        // TODO
-
-
+        $result = $this->queryParcelDeliveriesForBasket($savedBasketId, self::COUNTRY_ID_DE);
+        $this->assertResponseStatus(200, $result);
+        $this->assertEquals('Standard', $result['body']['data']['parcelDeliveriesForBasket'][0]['title']);
     }
 
-    private function queryParcelDeliveriesForBasket(): array
+    private function queryParcelDeliveriesForBasket(string $basketId, string $countryId): array
     {
         return $this->query('query {
-            parcelDeliveriesForBasket {
-                id
-                payments {
-                   TODO
-                }
+            parcelDeliveriesForBasket (
+                basketId: "' . $basketId . '",
+                countryId: "' . $countryId . '"
+                ) {
+                    title
             }
         }');
     }

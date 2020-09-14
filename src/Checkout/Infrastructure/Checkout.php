@@ -46,6 +46,8 @@ final class Checkout
         list($allSets, $activeShipSet, $paymentList) = $deliverySetList->getDeliverySetData(null, $user, $basket);
         $result = [];
 
+        //TODO: we'll need the DeliverySetList
+
         foreach ($allSets as $set){
             /** @var EshopDeliverySetModel $deliverySet */
             $result[] = new DeliverySetDataType($set);

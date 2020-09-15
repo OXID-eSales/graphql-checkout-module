@@ -62,7 +62,10 @@ REPLACE INTO `oxuserbasketitems` (`OXID`, `OXBASKETID`, `OXARTID`, `OXAMOUNT`, `
 ('_test_wish_list_item_1', '_test_wish_list_public', '_test_product_for_wish_list', 1, 'N;', ''),
 ('_test_wish_list_item_2', '_test_wish_list_private', '_test_product_for_wish_list', 1, 'N;', ''),
 ('_test_basket_item_1', '_test_basket_public', '_test_product_for_basket', 1, 'N;', ''),
-('_test_basket_item_2', '_test_basket_private', '_test_product_for_basket', 1, 'N;', '');
+('_test_basket_item_2', '_test_basket_private', '_test_product_for_basket', 1, 'N;', ''),
+('_test_basket_item_3', '_test_savedbasket', '05848170643ab0deb9914566391c0c63', 2, 'N;', ''),
+('_test_basket_item_4', '_test_savedbasket', '_test_product_for_basket', 3, 'N;', '');
+
 
 UPDATE `oxcountry` SET `oxorder` = 1 where `OXID` = 'a7c40f631fc920687.20179984';
 UPDATE `oxcountry` SET `oxorder` = 2 where `OXID` = '8f241f11096877ac0.98748826';
@@ -111,4 +114,16 @@ REPLACE INTO `oxvouchers` (`OXDATEUSED`, `OXORDERID`, `OXUSERID`, `OXRESERVED`, 
 ('2020-08-28', '7f0b6ef39c4e76c04a0f75232489bb65', '245ad3b5380202966df6ff128e9eecaq', 1, 'voucher1', 'voucherserie1', 321.6, 'usedvoucherid', now()),
 (null, null, null, 0, 'voucher2', 'voucherserie1', 0, 'notusedvoucherid', now());
 
+REPLACE INTO `oxdeliveryset` (`OXID`, `OXSHOPID`, `OXACTIVE`, `OXACTIVEFROM`, `OXACTIVETO`, `OXTITLE`, `OXTITLE_1`, `OXTITLE_2`, `OXTITLE_3`, `OXPOS`) VALUES
+('_deliveryset', 1, 1, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'graphql set', 'graphql set', '', '', 50);
+
+REPLACE INTO `oxobject2delivery` (`OXID`, `OXDELIVERYID`, `OXOBJECTID`, `OXTYPE`) VALUES
+('34842e73492c49fc1.89449037', '_deliveryset', 'a7c40f631fc920687.20179984', 'oxcountry'),
+('1b842e73492c49fc1.89449037', '_deliveryset', '1b842e73470578914.54719298', 'oxdelset');
+
+REPLACE INTO `oxobject2payment` (`OXID`, `OXPAYMENTID`, `OXOBJECTID`,  `OXTYPE`) VALUES
+('_deliveryrelation1', 'oxidcashondel', '_deliveryset', 'oxdelset');
+
+REPLACE INTO `oxdel2delset` (`OXID`, `OXDELID`, `OXDELSETID`) VALUES
+('_deliveryrelation1', '1b842e73470578914.54719298', '_deliveryset');
 

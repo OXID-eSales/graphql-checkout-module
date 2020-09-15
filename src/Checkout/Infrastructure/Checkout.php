@@ -9,13 +9,16 @@ declare(strict_types=1);
 
 namespace OxidEsales\GraphQL\Checkout\Checkout\Infrastructure;
 
-use OxidEsales\Eshop\Core\Registry;
+use OxidEsales\Eshop\Application\Model\PaymentList as EshopPaymentListModel;
+use OxidEsales\Eshop\Application\Model\DeliveryList as EshopDeliveryListModel;
+use OxidEsales\Eshop\Application\Model\UserBasketItem as EshopUserBasketItemModel;
 use OxidEsales\Eshop\Application\Model\DeliverySetList as EshopDeliverySetListModel;
 use OxidEsales\Eshop\Application\Model\DeliverySet as EshopDeliverySetModel;
 use OxidEsales\Eshop\Application\Model\Basket as EshopBasketModel;
 use OxidEsales\Eshop\Application\Model\User as EshopUserModel;
+use OxidEsales\Eshop\Application\Model\BasketItem as EshopBasketItemModel;
 use OxidEsales\Eshop\Application\Model\UserBasket as EshopUserBasketModel;
-use OxidEsales\GraphQL\Account\Basket\DataType\Basket as BasketDataType;
+use OxidEsales\GraphQL\Account\Basket\DataType\Basket as UserBasketDataType;
 use OxidEsales\GraphQL\Account\Account\DataType\Customer as CustomerDataType;
 use OxidEsales\GraphQL\Account\Country\DataType\Country as CountryDataType;
 use OxidEsales\GraphQL\Checkout\Checkout\DataType\DeliverySet as DeliverySetDataType;
@@ -30,18 +33,15 @@ final class Checkout
      */
     public function parcelDeliveriesForBasket(
         CustomerDataType $customer,
-        BasketDataType $basket,
+        UserBasketDataType $userBasket,
         CountryDataType $country
     ): array
     {
         /** @var EshopUserModel $user */
         $userModel = $customer->getEshopModel();
 
-        /** @var EshopUserBasketModel $userBasket */
-        $userBasketModel = $basket->getEshopModel();
-
-        //TODO: create EshopBasketModel from EshopUserBasketModel
-        $basketModel = oxNew(EshopBasketModel::class);
+        /** @var EshopBasketModel $basketModel */
+        $basketModel = $this->createBasket($userBasket);
 
         //Get available delivery set list for user and country
         $deliverySetList = oxNew(EshopDeliverySetListModel::class);
@@ -50,9 +50,12 @@ final class Checkout
         //create matrix for available shipping methods/payments
         $return = [];
 
+        $paymentList = oxNew(EshopPaymentListModel::class);
+        $deliveryList = oxNew(EshopDeliveryListModel::class);
+        //TODO: continue here
+
         /** @var EshopDeliverySetModel[] $availableDeliverySets */
         foreach ($deliverySetListArray as $key => $set) {
-
             list($allSets, $activeShipSet, $paymentList) =
                 $deliverySetList->getDeliverySetData($key, $userModel, $basketModel);
 
@@ -71,5 +74,32 @@ final class Checkout
         }
 
         return $return;
+    }
+
+    private function createBasket(UserBasketDataType $userBasket): EshopBasketModel
+    {
+        /** @var EshopUserBasketModel $userBasket */
+        $userBasketModel = $userBasket->getEshopModel();
+
+        /** @var EshopBasketModel $basketModel */
+        $basketModel = oxNew(EshopBasketModel::class);
+
+        $savedItems = $userBasketModel->getItems(true);
+       /* TODO
+        foreach ($savedItems as $item) {
+            try {
+                $basketModel->addToBasket(
+                      $item->getFieldData('oxartid'),
+                      $item->getFieldData('oxamount'),
+                      $item->getSelList(),
+                      $item->getPersParams(),
+                      true
+                );
+            } catch (\OxidEsales\Eshop\Core\Exception\ArticleException $exception) {
+                // caught and ignored as does the shop (TODO: we need feedback for the customer)
+            }
+        }*/
+
+        return $basketModel;
     }
 }

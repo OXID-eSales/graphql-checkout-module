@@ -14,10 +14,6 @@ declare(strict_types=1);
 
 namespace OxidEsales\GraphQL\Checkout\Tests\Integration;
 
-use OxidEsales\Eshop\Application\Model\User as EshopUserModel;
-use OxidEsales\Eshop\Application\Model\UserBasket as EshopUserBasketModel;
-use OxidEsales\Eshop\Application\Model\Basket as EshopBasketModel;
-use OxidEsales\Eshop\Application\Model\DeliverySetList as EshopDeliverySetListModel;
 use OxidEsales\GraphQL\Base\Tests\Integration\TokenTestCase;
 
 final class SpikeTest extends TokenTestCase
@@ -30,9 +26,9 @@ final class SpikeTest extends TokenTestCase
 
     private const PRODUCT_ID = 'dc5ffdf380e15674b56dd562a7cb6aec';
 
-    private const BASKET_SAVED_BASKET = 'savedbasket';
+    private const BASKET_SAVED_BASKET = 'checkoutbasket';
 
-    private const BASKET_SAVED_BASKET_ID = '_test_savedbasket';
+    private const BASKET_SAVED_BASKET_ID = '_checkoutbasket';
 
     private const DEFAULT_DELIVERY_ADDRESS_ID = 'test_delivery_address';
 
@@ -41,9 +37,6 @@ final class SpikeTest extends TokenTestCase
     public function testDeliverySetsForUserCountryBasket(): void
     {
         $this->prepareToken(self::USERNAME, self::PASSWORD);
-
-        // remove possible saved basket
-        $this->basketRemoveMutation(self::BASKET_SAVED_BASKET_ID);
 
         // create savedBasket
         $result = $this->basketCreateMutation(self::BASKET_SAVED_BASKET);
@@ -58,9 +51,16 @@ final class SpikeTest extends TokenTestCase
         //Shop offers a list with delivery options and shows the payment options
         //available per delivery option.
         //see PaymentController::getAllSets() and PaymentController::getPaymentList()
-        $result = $this->queryParcelDeliveriesForBasket($savedBasketId, self::COUNTRY_ID_DE);
+        $result = $this->queryParcelDeliveriesForBasket($savedBasketId, self::COUNTRY_ID_DE); var_export($result);
         $this->assertResponseStatus(200, $result);
         $this->assertEquals('Standard', $result['body']['data']['parcelDeliveriesForBasket'][0]['deliverySet']['title']);
+        $this->assertEquals(2, count($result['body']['data']['parcelDeliveriesForBasket']));
+        $this->assertEquals(4, count($result['body']['data']['parcelDeliveriesForBasket'][0]['payments']));
+        $this->assertEquals(1, count($result['body']['data']['parcelDeliveriesForBasket'][1]['payments']));
+
+        // remove saved basket
+        $result = $this->basketRemoveMutation($savedBasketId);
+        $this->assertResponseStatus(200, $result);
     }
 
     private function queryParcelDeliveriesForBasket(string $basketId, string $countryId): array

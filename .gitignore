@@ -3,3 +3,4 @@
 composer.lock
 vendor/
 tests/reports/
+tests/.phpunit.result.cache

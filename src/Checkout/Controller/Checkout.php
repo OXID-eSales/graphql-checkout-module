@@ -9,7 +9,7 @@ declare(strict_types=1);
 
 namespace OxidEsales\GraphQL\Checkout\Checkout\Controller;
 
-use OxidEsales\GraphQL\Checkout\Checkout\DataType\DeliverySet;
+use OxidEsales\GraphQL\Checkout\Checkout\DataType\Delivery as DeliveryDataType;
 use OxidEsales\GraphQL\Checkout\Checkout\Service\Checkout as CheckoutService;
 use OxidEsales\GraphQL\Account\Account\DataType\Customer as CustomerDataType;
 use OxidEsales\GraphQL\Account\Account\Service\Customer as CustomerService;
@@ -43,7 +43,7 @@ final class Checkout
      * @Query()
      * @Logged()
      *
-     * @return DeliverySet[]
+     * @return DeliveryDataType[]
      */
     public function parcelDeliveriesForBasket(string $basketId, string $countryId): array
     {

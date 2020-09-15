@@ -19,12 +19,14 @@ use OxidEsales\GraphQL\Account\Basket\DataType\Basket as BasketDataType;
 use OxidEsales\GraphQL\Account\Account\DataType\Customer as CustomerDataType;
 use OxidEsales\GraphQL\Account\Country\DataType\Country as CountryDataType;
 use OxidEsales\GraphQL\Checkout\Checkout\DataType\DeliverySet as DeliverySetDataType;
+use OxidEsales\GraphQL\Checkout\Checkout\DataType\Payment as PaymentDataType;
+use OxidEsales\GraphQL\Checkout\Checkout\DataType\Delivery as DeliveryDataType;
 
 final class Checkout
 {
 
     /**
-     * @return DeliverySetDataType[]
+     * @return DeliveryDataType[]
      */
     public function parcelDeliveriesForBasket(
         CustomerDataType $customer,
@@ -33,37 +35,41 @@ final class Checkout
     ): array
     {
         /** @var EshopUserModel $user */
-        $user = $customer->getEshopModel();
+        $userModel = $customer->getEshopModel();
 
         /** @var EshopUserBasketModel $userBasket */
-        $userBasket = $basket->getEshopModel();
+        $userBasketModel = $basket->getEshopModel();
 
         //TODO: create EshopBasketModel from EshopUserBasketModel
-        $basket = oxNew(EshopBasketModel::class);
+        $basketModel = oxNew(EshopBasketModel::class);
 
-        //TODO: we need some matrix for available shipping methods/payments
+        //Get available delivery set list for user and country
         $deliverySetList = oxNew(EshopDeliverySetListModel::class);
-        list($allSets, $activeShipSet, $paymentList) = $deliverySetList->getDeliverySetData(null, $user, $basket);
-        $result = [];
+        $deliverySetListArray = $deliverySetList->getDeliverySetList($userModel, (string) $country->getId());
 
-        //TODO: we'll need the DeliverySetList
+        //create matrix for available shipping methods/payments
+        $return = [];
 
-        foreach ($allSets as $set){
-            /** @var EshopDeliverySetModel $deliverySet */
-            $result[] = new DeliverySetDataType($set);
+        /** @var EshopDeliverySetModel[] $availableDeliverySets */
+        foreach ($deliverySetListArray as $key => $set) {
+
+            list($allSets, $activeShipSet, $paymentList) =
+                $deliverySetList->getDeliverySetData($key, $userModel, $basketModel);
+
+            if (empty($paymentList)) {
+                continue;
+            }
+
+            $deliveryDataType = new DeliverySetDataType($set);
+
+            foreach ($paymentList as $payment){
+                /** @var EshopPaymentModel $payment */
+                $payments[] = new PaymentDataType($payment);
+            }
+
+            $return[] = new DeliveryDataType($deliveryDataType, $payments);
         }
 
-        return $result;
-    }
-
-    /**
-     * Sets user id to session.
-     *
-     * @param string $userId The user id.
-     */
-    private function setUserIdToSession($userId)
-    {
-        Registry::getConfig()->setUser(null);
-        Registry::getSession()->setVariable('usr', $userId);
+        return $return;
     }
 }

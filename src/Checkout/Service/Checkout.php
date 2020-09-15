@@ -11,7 +11,7 @@ namespace OxidEsales\GraphQL\Checkout\Checkout\Service;
 
 use OxidEsales\GraphQL\Account\Basket\DataType\Basket as BasketDataType;
 use OxidEsales\GraphQL\Account\Country\DataType as CountryDataType;
-use OxidEsales\GraphQL\Checkout\Checkout\DataType\DeliverySet as DeliverySetDataType;
+use OxidEsales\GraphQL\Checkout\Checkout\DataType\Delivery as DeliveryDataType;
 use OxidEsales\GraphQL\Account\Basket\Service\Basket as AccountBasketService;
 use OxidEsales\GraphQL\Account\Country\Service\Country as CountryService;
 use OxidEsales\GraphQL\Account\Account\DataType\Customer as CustomerDataType;
@@ -39,7 +39,7 @@ final class Checkout
     }
 
     /**
-     * @return DeliverySetDataType[]
+     * @return DeliveryDataType[]
      */
     public function parcelDeliveriesForBasket(CustomerDataType $customer, string $basketId, string $countryId): array
     {

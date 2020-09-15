@@ -14,10 +14,16 @@ declare(strict_types=1);
 
 namespace OxidEsales\GraphQL\Checkout\Tests\Integration;
 
+use OxidEsales\Eshop\Application\Model\User as EshopUserModel;
+use OxidEsales\Eshop\Application\Model\UserBasket as EshopUserBasketModel;
+use OxidEsales\Eshop\Application\Model\Basket as EshopBasketModel;
+use OxidEsales\Eshop\Application\Model\DeliverySetList as EshopDeliverySetListModel;
 use OxidEsales\GraphQL\Base\Tests\Integration\TokenTestCase;
 
 final class SpikeTest extends TokenTestCase
 {
+    private const TEST_USER_OXID = 'e7af1c3b786fd02906ccd75698f4e6b9';
+
     private const USERNAME = 'user@oxid-esales.com';
 
     private const PASSWORD = 'useruser';
@@ -32,7 +38,7 @@ final class SpikeTest extends TokenTestCase
 
     private const COUNTRY_ID_DE = 'a7c40f631fc920687.20179984';
 
-    public function testSpike(): void
+    public function testDeliverySetsForUserCountryBasket(): void
     {
         $this->prepareToken(self::USERNAME, self::PASSWORD);
 
@@ -54,7 +60,7 @@ final class SpikeTest extends TokenTestCase
         //see PaymentController::getAllSets() and PaymentController::getPaymentList()
         $result = $this->queryParcelDeliveriesForBasket($savedBasketId, self::COUNTRY_ID_DE);
         $this->assertResponseStatus(200, $result);
-        $this->assertEquals('Standard', $result['body']['data']['parcelDeliveriesForBasket'][0]['title']);
+        $this->assertEquals('Standard', $result['body']['data']['parcelDeliveriesForBasket'][0]['deliverySet']['title']);
     }
 
     private function queryParcelDeliveriesForBasket(string $basketId, string $countryId): array
@@ -64,7 +70,12 @@ final class SpikeTest extends TokenTestCase
                 basketId: "' . $basketId . '",
                 countryId: "' . $countryId . '"
                 ) {
-                    title
+                    deliverySet {
+                       title
+                    }
+                    payments {
+                       description
+                    }
             }
         }');
     }

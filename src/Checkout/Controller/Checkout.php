@@ -46,7 +46,7 @@ final class Checkout
      *
      * @return DeliveryDataType[]
      */
-    public function parcelDeliveriesForBasket(string $basketId, string $countryId): array
+    public function parcelDeliveriesForBasket(string $basketId, string $countryId, ?string $shippingId = null): array
     {
         /** @var CustomerDataType $customer */
         $customer = $this->customerService->customer(
@@ -56,7 +56,8 @@ final class Checkout
         return $this->checkoutService->parcelDeliveriesForBasket(
             $customer,
             $basketId,
-            $countryId
+            $countryId,
+            $shippingId
         );
     }
 

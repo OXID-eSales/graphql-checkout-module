@@ -31,7 +31,8 @@ final class Checkout
     public function parcelDeliveriesForBasket(
         CustomerDataType $customer,
         UserBasketDataType $userBasket,
-        CountryDataType $country
+        CountryDataType $country,
+        ?string $actShippingId = null
     ): array
     {
         /** @var EshopUserModel $user */
@@ -41,15 +42,16 @@ final class Checkout
         /** @var EshopBasketModel $basketModel */
         $basketModel = $this->createBasket($userModel, $userBasket);
 
-        //do we need this?
-        $basketModel->setBasketUser($userModel);
-        EshopRegistry::getSession()->setBasket($basketModel);
-        $basketModel->onUpdate();
-        $basketModel->calculateBasket();
-
         //Get available delivery set list for user and country
         $deliverySetList = oxNew(EshopDeliverySetListModel::class);
-        $deliverySetListArray = $deliverySetList->getDeliverySetList($userModel, (string) $country->getId());
+        $initialList = $deliverySetList->getDeliverySetList($userModel, (string) $country->getId());
+
+        $deliverySetListArray = [];
+        if (is_null($actShippingId)) {
+            $deliverySetListArray = $initialList;
+        } elseif (array_key_exists($actShippingId, $initialList)) {
+            $deliverySetListArray[$actShippingId] = $initialList[$actShippingId];
+        }
 
         //create matrix for available shipping methods/payments
         $return = [];
@@ -126,6 +128,12 @@ final class Checkout
                 // caught and ignored as does the shop (TODO: we need feedback for the customer)
             }
         }
+
+        //do we need this?
+        $basketModel->setBasketUser($userModel);
+        EshopRegistry::getSession()->setBasket($basketModel);
+        $basketModel->onUpdate();
+        $basketModel->calculateBasket();
 
         return $basketModel;
     }

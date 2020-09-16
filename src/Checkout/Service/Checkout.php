@@ -42,7 +42,12 @@ final class Checkout
     /**
      * @return DeliveryDataType[]
      */
-    public function parcelDeliveriesForBasket(CustomerDataType $customer, string $basketId, string $countryId): array
+    public function parcelDeliveriesForBasket(
+        CustomerDataType $customer,
+        string $basketId,
+        string $countryId,
+        ?string $shippingId = null
+    ): array
     {
         /** @var BasketDataType $basket */
         $basket = $this->basketService->basket($basketId);
@@ -50,7 +55,7 @@ final class Checkout
         /** @var CountryDataType $country */
         $country = $this->countryService->country($countryId);
 
-        return $this->checkoutInfrastructure->parcelDeliveriesForBasket($customer, $basket, $country);
+        return $this->checkoutInfrastructure->parcelDeliveriesForBasket($customer, $basket, $country, $shippingId);
     }
 
     /**

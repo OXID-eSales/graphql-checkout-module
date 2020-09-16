@@ -1,0 +1,4 @@
+name: GraphQL Checkout module migration
+migrations_namespace: OxidEsales\GraphQL\Checkout\Migrations
+table_name: oxmigrations_graphql_checkout
+migrations_directory: data

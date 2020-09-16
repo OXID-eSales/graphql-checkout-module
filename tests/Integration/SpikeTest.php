@@ -65,6 +65,20 @@ final class SpikeTest extends TokenTestCase
         $this->assertResponseStatus(200, $result);
     }
 
+    public function testDeliverySetsForUserCountry(): void
+    {
+        $this->prepareToken(self::USERNAME, self::PASSWORD);
+
+        //query parcelDeliveries (argument: country id)
+        //Shop offers a list with delivery options
+        $result = $this->queryParcelDeliveries(self::COUNTRY_ID_DE);
+        $this->assertResponseStatus(200, $result);
+
+        $this->assertEquals(4, count($result['body']['data']['parcelDeliveries']));
+        $this->assertEquals('Standard', $result['body']['data']['parcelDeliveries'][0]['title']);
+        $this->assertEquals('graphql set', $result['body']['data']['parcelDeliveries'][3]['title']);
+    }
+
     private function queryParcelDeliveriesForBasket(string $basketId, string $countryId): array
     {
         return $this->query('query {
@@ -82,6 +96,19 @@ final class SpikeTest extends TokenTestCase
                     }
             }
         }');
+    }
+
+    private function queryParcelDeliveries(string $countryId): array
+    {
+        return $this->query('query {
+            parcelDeliveries (
+                countryId: "' . $countryId . '"
+                ) {
+                    title
+                    id
+                }
+            }'
+        );
     }
 
     private function basketCreateMutation(string $title): array

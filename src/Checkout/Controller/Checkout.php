@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace OxidEsales\GraphQL\Checkout\Checkout\Controller;
 
 use OxidEsales\GraphQL\Checkout\Checkout\DataType\Delivery as DeliveryDataType;
+use OxidEsales\GraphQL\Checkout\Checkout\DataType\DeliverySet as DeliverySetDataType;
 use OxidEsales\GraphQL\Checkout\Checkout\Service\Checkout as CheckoutService;
 use OxidEsales\GraphQL\Account\Account\DataType\Customer as CustomerDataType;
 use OxidEsales\GraphQL\Account\Account\Service\Customer as CustomerService;
@@ -55,6 +56,25 @@ final class Checkout
         return $this->checkoutService->parcelDeliveriesForBasket(
             $customer,
             $basketId,
+            $countryId
+        );
+    }
+
+    /**
+     * @Query()
+     * @Logged()
+     *
+     * @return DeliverySetDataType[]
+     */
+    public function parcelDeliveries(string $countryId): array
+    {
+        /** @var CustomerDataType $customer */
+        $customer = $this->customerService->customer(
+            $this->authenticationService->getUserId()
+        );
+
+        return $this->checkoutService->parcelDeliveries(
+            $customer,
             $countryId
         );
     }

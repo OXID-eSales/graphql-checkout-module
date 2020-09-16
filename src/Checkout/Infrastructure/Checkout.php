@@ -78,6 +78,31 @@ final class Checkout
         return $return;
     }
 
+    /**
+     * @return DeliverySetDataType[]
+     */
+    public function parcelDeliveries(
+        CustomerDataType $customer,
+        CountryDataType $country
+    ): array
+    {
+        /** @var EshopUserModel $user */
+        $userModel = $customer->getEshopModel();
+        $this->setUserIdToSession($userModel->getId()); //do we need this?
+
+        //Get available delivery set list for user and country
+        $deliverySetList = oxNew(EshopDeliverySetListModel::class);
+        $deliverySetListArray = $deliverySetList->getDeliverySetList($userModel, (string) $country->getId());
+
+        $return = [];
+
+        foreach ($deliverySetListArray as $key => $set) {
+            $return[$key] = new DeliverySetDataType($set);
+        }
+
+        return $return;
+    }
+
     private function createBasket(EshopUserModel $userModel, UserBasketDataType $userBasket): EshopBasketModel
     {
         /** @var EshopUserBasketModel $userBasketModel */

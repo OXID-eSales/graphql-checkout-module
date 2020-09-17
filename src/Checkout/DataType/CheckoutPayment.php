@@ -18,7 +18,7 @@ use TheCodingMachine\GraphQLite\Types\ID;
 /**
  * @Type()
  */
-final class Payment implements DataType
+final class CheckoutPayment implements DataType
 {
     /** @var EshopPaymentModel */
     private $payment;

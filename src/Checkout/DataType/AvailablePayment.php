@@ -18,38 +18,37 @@ use TheCodingMachine\GraphQLite\Types\ID;
 /**
  * @Type()
  */
-final class Delivery
+final class AvailablePayment
 {
-    /** @var DeliverySetDataType */
-    private $deliverySetDataType;
+    /** @var DeliverySetDataType[] */
+    private $deliverySetDataTypes;
 
     /** @var PaymentDataType[] */
-    private $paymentDataTypes;
-
+    private $paymentDataType;
 
     public function __construct(
-        DeliverySetDataType $deliverySetDataType,
-        array $paymentDataTypes
+        PaymentDataType $paymentDataType,
+        array $deliverySetDataTypes
     ) {
-        $this->deliverySetDataType = $deliverySetDataType;
-        $this->paymentDataTypes = $paymentDataTypes;
+        $this->paymentDataType = $paymentDataType;
+        $this->deliverySetDataTypes = $deliverySetDataTypes;
     }
 
     /**
      * @Field
      */
-    public function deliverySet(): DeliverySetDataType
+    public function payment(): PaymentDataType
     {
-        return $this->deliverySetDataType;
+        return $this->paymentDataType;
     }
 
     /**
      * @Field
      *
-     * @return PaymentDataType[]
+     * @return DeliverySetDataType[]
      */
-    public function payments(): array
+    public function deliverySets(): array
     {
-        return $this->paymentDataTypes;
+        return $this->deliverySetDataTypes;
     }
 }

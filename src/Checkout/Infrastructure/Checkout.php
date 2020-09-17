@@ -19,8 +19,9 @@ use OxidEsales\Eshop\Application\Model\UserBasket as EshopUserBasketModel;
 use OxidEsales\GraphQL\Account\Basket\DataType\Basket as UserBasketDataType;
 use OxidEsales\GraphQL\Account\Account\DataType\Customer as CustomerDataType;
 use OxidEsales\GraphQL\Account\Country\DataType\Country as CountryDataType;
+use OxidEsales\GraphQL\Checkout\Checkout\DataType\AvailablePayment as AvailablePaymentDataType;
 use OxidEsales\GraphQL\Checkout\Checkout\DataType\DeliverySet as DeliverySetDataType;
-use OxidEsales\GraphQL\Checkout\Checkout\DataType\Payment as PaymentDataType;
+use OxidEsales\GraphQL\Checkout\Checkout\DataType\CheckoutPayment as PaymentDataType;
 use OxidEsales\GraphQL\Checkout\Checkout\DataType\Delivery as DeliveryDataType;
 
 final class Checkout
@@ -40,9 +41,9 @@ final class Checkout
         $this->setUserIdToSession($userModel->getId()); //do we need this?
 
         /** @var EshopBasketModel $basketModel */
-        $basketModel = $this->createBasket($userModel, $userBasket);
+        $basketModel = $this->createBasketModel($userModel, $userBasket);
 
-        //Get available delivery set list for user and country
+        //Initialize available delivery set list for user and country
         $deliverySetList = oxNew(EshopDeliverySetListModel::class);
         $initialList = $deliverySetList->getDeliverySetList($userModel, (string) $country->getId());
 
@@ -105,7 +106,51 @@ final class Checkout
         return $return;
     }
 
-    private function createBasket(EshopUserModel $userModel, UserBasketDataType $userBasket): EshopBasketModel
+    /**
+     * @return AvailablePaymentDataType[]
+     */
+    public function paymentMethodsForBasket(
+        CustomerDataType $customer,
+        UserBasketDataType $userBasket,
+        CountryDataType $country
+    ): array
+    {
+        /** @var EshopUserModel $user */
+        $userModel = $customer->getEshopModel();
+        $this->setUserIdToSession($userModel->getId()); //do we need this?
+
+        /** @var EshopBasketModel $basketModel */
+        $basketModel = $this->createBasketModel($userModel, $userBasket);
+
+        //Initialize available delivery set list for user and country
+        $deliverySetList = oxNew(EshopDeliverySetListModel::class);
+        $deliverySetListArray = $deliverySetList->getDeliverySetList($userModel, (string) $country->getId());
+
+        //create matrix for available payment /shipping methods
+        $payments = [];
+        $deliveries = [];
+
+        /** @var EshopDeliverySetModel[] $availableDeliverySets */
+        foreach ($deliverySetListArray as $key => $set) {
+            #$basketModel->setShipping($key); //do we need this?
+            list($allSets, $activeShipSet, $paymentList) =
+                $deliverySetList->getDeliverySetData($key, $userModel, $basketModel);
+
+            foreach ($paymentList as $paymentModel) {
+                $payments[$paymentModel->getId()] = new PaymentDataType($paymentModel);
+                $deliveries[$paymentModel->getId()][] = new DeliverySetDataType($set);
+            }
+        }
+
+        $return = [];
+        foreach ($payments as $key => $item) {
+            $return[] = new AvailablePaymentDataType($item, $deliveries[$key]);
+        }
+
+        return $return;
+    }
+
+    private function createBasketModel(EshopUserModel $userModel, UserBasketDataType $userBasket): EshopBasketModel
     {
         /** @var EshopUserBasketModel $userBasketModel */
         $userBasketModel = $userBasket->getEshopModel();

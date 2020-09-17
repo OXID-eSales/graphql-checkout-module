@@ -40,7 +40,7 @@ final class SpikeTest extends TokenTestCase
     {
         $savedBasketId = $this->prepare();
 
-        //query parcelDeliveriesForBasket (arguments: basket id and country id)
+        //query Checkout::parcelDeliveriesForBasket (arguments: basket id and country id)
         //Shop offers a list with delivery options and shows the payment options
         //available per delivery option.
         //see PaymentController::getAllSets() and PaymentController::getPaymentList()
@@ -78,7 +78,7 @@ final class SpikeTest extends TokenTestCase
     {
         $savedBasketId = $this->prepare();
 
-        //query parcelDeliveriesForBasket (arguments: basket id, country id, shipping id)
+        //query Checkout::parcelDeliveriesForBasket (arguments: basket id, country id, shipping id)
         $result = $this->query('query {
             parcelDeliveriesForBasket (
                 basketId: "' . $savedBasketId . '",
@@ -111,7 +111,7 @@ final class SpikeTest extends TokenTestCase
     {
         $this->prepareToken(self::USERNAME, self::PASSWORD);
 
-        //query parcelDeliveries (argument: country id)
+        //query Checkout::parcelDeliveries (argument: country id)
         //Shop offers a list with delivery options
         $result = $this->query('query {
             parcelDeliveries (
@@ -128,6 +128,42 @@ final class SpikeTest extends TokenTestCase
         $this->assertEquals(4, count($result['body']['data']['parcelDeliveries']));
         $this->assertEquals('Standard', $result['body']['data']['parcelDeliveries'][0]['title']);
         $this->assertEquals('graphql set', $result['body']['data']['parcelDeliveries'][3]['title']);
+    }
+
+    public function testAvailablePaymentsForUserCountryBasket(): void
+    {
+        $savedBasketId = $this->prepare();
+
+        //query Checkout::paymentMethodsForBasket (arguments: basket id and country id)
+        //Shop offers a list with delivery options and shows the payment options
+        //available per delivery option.
+        //see PaymentController::getAllSets() and PaymentController::getPaymentList()
+        $result = $this->query('query {
+            paymentMethodsForBasket (
+                basketId: "' . $savedBasketId . '",
+                countryId: "' . self::COUNTRY_ID_DE . '"
+                ) {
+                    payment {
+                       id
+                       description
+                    }
+                    deliverySets {
+                       title
+                       id
+                    }
+            }
+        }');
+
+        $this->assertResponseStatus(200, $result);
+
+        $list = $result['body']['data']['paymentMethodsForBasket'];
+        $this->assertEquals(5, count($list));
+        $this->assertEquals('oxidgraphql', $list[4]['payment']['id']);
+        $this->assertEquals('graphql set', $list[4]['deliverySets'][0]['title']);
+
+        // remove saved basket
+        $result = $this->basketRemoveMutation($savedBasketId);
+        $this->assertResponseStatus(200, $result);
     }
 
     private function basketCreateMutation(string $title): array

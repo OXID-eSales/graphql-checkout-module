@@ -13,8 +13,8 @@ use OxidEsales\GraphQL\Checkout\Checkout\DataType\Delivery as DeliveryDataType;
 use OxidEsales\GraphQL\Checkout\Checkout\DataType\DeliverySet as DeliverySetDataType;
 use OxidEsales\GraphQL\Checkout\Checkout\DataType\AvailablePayment as AvailablePaymentDataType;
 use OxidEsales\GraphQL\Checkout\Checkout\Service\Checkout as CheckoutService;
-use OxidEsales\GraphQL\Account\Account\DataType\Customer as CustomerDataType;
-use OxidEsales\GraphQL\Account\Account\Service\Customer as CustomerService;
+use OxidEsales\GraphQL\Account\Customer\DataType\Customer as CustomerDataType;
+use OxidEsales\GraphQL\Account\Customer\Service\Customer as CustomerService;
 use OxidEsales\GraphQL\Base\Service\Authentication;
 use TheCodingMachine\GraphQLite\Annotations\Logged;
 use TheCodingMachine\GraphQLite\Annotations\Mutation;
@@ -98,6 +98,25 @@ final class Checkout
         return $this->checkoutService->parcelDeliveries(
             $customer,
             $countryId
+        );
+    }
+
+    /**
+     * @Mutation()
+     * @Logged()
+     *
+     * @return int
+     */
+    public function placeOrder(string $basketId): int
+    {
+        /** @var CustomerDataType $customer */
+        $customer = $this->customerService->customer(
+            $this->authenticationService->getUserId()
+        );
+
+        return $this->checkoutService->placeOrder(
+            $customer,
+            $basketId
         );
     }
 }

@@ -13,11 +13,12 @@ use OxidEsales\Eshop\Core\Registry as EshopRegistry;
 use OxidEsales\Eshop\Application\Model\DeliverySetList as EshopDeliverySetListModel;
 use OxidEsales\Eshop\Application\Model\DeliverySet as EshopDeliverySetModel;
 use OxidEsales\Eshop\Application\Model\Basket as EshopBasketModel;
+use OxidEsales\Eshop\Application\Model\Order as OrderModel;
 use OxidEsales\Eshop\Application\Model\User as EshopUserModel;
 use OxidEsales\Eshop\Application\Model\BasketItem as EshopBasketItemModel;
 use OxidEsales\Eshop\Application\Model\UserBasket as EshopUserBasketModel;
 use OxidEsales\GraphQL\Account\Basket\DataType\Basket as UserBasketDataType;
-use OxidEsales\GraphQL\Account\Account\DataType\Customer as CustomerDataType;
+use OxidEsales\GraphQL\Account\Customer\DataType\Customer as CustomerDataType;
 use OxidEsales\GraphQL\Account\Country\DataType\Country as CountryDataType;
 use OxidEsales\GraphQL\Checkout\Checkout\DataType\AvailablePayment as AvailablePaymentDataType;
 use OxidEsales\GraphQL\Checkout\Checkout\DataType\DeliverySet as DeliverySetDataType;
@@ -33,7 +34,7 @@ final class Checkout
         CustomerDataType $customer,
         UserBasketDataType $userBasket,
         CountryDataType $country,
-        ?string $actShippingId = null
+        string $actShippingId = null
     ): array
     {
         /** @var EshopUserModel $user */
@@ -148,6 +149,36 @@ final class Checkout
         }
 
         return $return;
+    }
+
+    public function placeOrder(
+        CustomerDataType $customer,
+        UserBasketDataType $userBasket
+    )
+    {
+        /** @var EshopUserModel $user */
+        $userModel = $customer->getEshopModel();
+
+        /** @var EshopBasketModel $basketModel */
+        $basketModel = $this->createBasketModel($userModel, $userBasket);
+        //we need new field in oxuserbaskets table, where we will store the chosen payment id and will get it from there
+        $basketModel->setPayment('oxidcashondel');
+
+        /** @var OrderModel $orderModel */
+        $orderModel = oxNew(OrderModel::class);
+
+        // we need new field in oxuserbaskets table where we will store encoded delivery address from checkout steps
+        $_POST['sDeliveryAddressMD5'] = $userBasket->getEncodedDeliveryAddress();
+
+        $state = $orderModel->finalizeOrder($basketModel, $userModel);
+
+        //we need to delete the basket after order to prevent ordering it twice
+        if($state === $orderModel::ORDER_STATE_OK || $state === $orderModel::ORDER_STATE_MAILINGERROR) {
+            $basketModel->deleteBasket();
+        }
+
+        //return order data type
+        return $state;
     }
 
     private function createBasketModel(EshopUserModel $userModel, UserBasketDataType $userBasket): EshopBasketModel

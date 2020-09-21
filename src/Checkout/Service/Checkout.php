@@ -16,7 +16,7 @@ use OxidEsales\GraphQL\Checkout\Checkout\DataType\Delivery as DeliveryDataType;
 use OxidEsales\GraphQL\Checkout\Checkout\DataType\DeliverySet as DeliverySetDataType;
 use OxidEsales\GraphQL\Account\Basket\Service\Basket as AccountBasketService;
 use OxidEsales\GraphQL\Account\Country\Service\Country as CountryService;
-use OxidEsales\GraphQL\Account\Account\DataType\Customer as CustomerDataType;
+use OxidEsales\GraphQL\Account\Customer\DataType\Customer as CustomerDataType;
 use OxidEsales\GraphQL\Checkout\Checkout\Infrastructure\Checkout as CheckoutInfrastructure;
 
 final class Checkout
@@ -86,5 +86,16 @@ final class Checkout
         $country = $this->countryService->country($countryId);
 
         return $this->checkoutInfrastructure->paymentMethodsForBasket($customer, $basket, $country);
+    }
+
+    public function placeOrder(
+        CustomerDataType $customer,
+        string $basketId
+    )
+    {
+        /** @var BasketDataType $basket */
+        $basket = $this->basketService->basket($basketId);
+
+        return $this->checkoutInfrastructure->placeOrder($customer, $basket);
     }
 }

@@ -29,13 +29,15 @@
         "phpstan/phpstan": "^0.12.11",
         "oxid-esales/oxideshop-ce": "6.5",
         "oxid-esales/oxideshop-unified-namespace-generator": "^2.0",
-        "sensiolabs-de/deptrac-shim": "^0.6.0|^0.8.2"
+        "sensiolabs-de/deptrac-shim": "^0.6.0|^0.8.2",
+        "oxid-esales/oxideshop-doctrine-migration-wrapper": "^v3.1.0"
     },
     "prefer-stable": true,
     "autoload": {
         "psr-4": {
             "OxidEsales\\GraphQL\\Checkout\\": "src",
-            "OxidEsales\\GraphQL\\Checkout\\Tests\\": "tests"
+            "OxidEsales\\GraphQL\\Checkout\\Tests\\": "tests",
+            "OxidEsales\\GraphQL\\Checkout\\Migrations\\": "migration"
         }
     },
     "scripts": {

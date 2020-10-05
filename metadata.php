@@ -5,6 +5,8 @@
  * See LICENSE file for license details.
  */
 
+declare(strict_types=1);
+
 /**
  * Metadata version
  */
@@ -37,5 +39,8 @@ $aModule = [
     'blocks'      => [
     ],
     'settings'    => [
+    ],
+    'events'      => [
+        'onActivate' => 'OxidEsales\\GraphQL\\Checkout\\Framework\\ModuleSetup::onActivate',
     ],
 ];

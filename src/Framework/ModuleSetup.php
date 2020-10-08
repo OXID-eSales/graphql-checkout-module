@@ -12,7 +12,7 @@ namespace OxidEsales\GraphQL\Checkout\Framework;
 use OxidEsales\DoctrineMigrationWrapper\Migrations;
 use OxidEsales\DoctrineMigrationWrapper\MigrationsBuilder;
 
-class ModuleSetup
+final class ModuleSetup
 {
     public static function onActivate(): void
     {

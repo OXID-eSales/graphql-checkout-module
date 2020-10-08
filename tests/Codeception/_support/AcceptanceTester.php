@@ -25,7 +25,7 @@ namespace OxidEsales\GraphQL\Checkout\Tests\Codeception;
  *
  * @SuppressWarnings(PHPMD)
  */
-class AcceptanceTester extends \Codeception\Actor
+final class AcceptanceTester extends \Codeception\Actor
 {
     use _generated\AcceptanceTesterActions;
 }

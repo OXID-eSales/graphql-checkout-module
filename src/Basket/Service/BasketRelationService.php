@@ -11,6 +11,7 @@ namespace OxidEsales\GraphQL\Checkout\Basket\Service;
 
 use OxidEsales\GraphQL\Account\Address\DataType\DeliveryAddress;
 use OxidEsales\GraphQL\Account\Basket\DataType\Basket;
+use OxidEsales\GraphQL\Account\Payment\DataType\Payment;
 use OxidEsales\GraphQL\Checkout\Basket\Service\Basket as BasketService;
 use TheCodingMachine\GraphQLite\Annotations\ExtendType;
 use TheCodingMachine\GraphQLite\Annotations\Field;
@@ -32,10 +33,20 @@ final class BasketRelationService
     /**
      * @Field()
      */
-    public function deliveryAddress(Basket $basket): DeliveryAddress
+    public function deliveryAddress(Basket $basket): ?DeliveryAddress
     {
         $addressId = (string) $basket->getEshopModel()->getFieldData('oegql_deladdressid');
 
         return $this->basketService->getDeliveryAddress($addressId);
+    }
+
+    /**
+     * @Field()
+     */
+    public function payment(Basket $basket): ?Payment
+    {
+        $paymentId = (string) $basket->getEshopModel()->getFieldData('oegql_paymentid');
+
+        return $this->basketService->getPayment($paymentId);
     }
 }

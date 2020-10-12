@@ -16,6 +16,7 @@ use OxidEsales\GraphQL\Account\Address\Service\DeliveryAddress as DeliveryAddres
 use OxidEsales\GraphQL\Account\Basket\DataType\Basket as BasketDataType;
 use OxidEsales\GraphQL\Account\Basket\Exception\BasketAccessForbidden;
 use OxidEsales\GraphQL\Account\Basket\Exception\BasketNotFound;
+use OxidEsales\GraphQL\Account\Payment\DataType\Payment as PaymentDataType;
 use OxidEsales\GraphQL\Base\Exception\InvalidLogin;
 use OxidEsales\GraphQL\Base\Exception\NotFound;
 use OxidEsales\GraphQL\Base\Service\Authentication;
@@ -88,10 +89,9 @@ final class Basket
     }
 
     /**
-     * @throws DeliveryAddressNotFound
      * @throws InvalidLogin
      */
-    public function getDeliveryAddress(string $id): DeliveryAddressDataType
+    public function getDeliveryAddress(string $id): ?DeliveryAddressDataType
     {
         /** Only logged in users can query delivery addresses */
         if (!$this->authenticationService->isLogged()) {
@@ -106,7 +106,7 @@ final class Basket
                 false
             );
         } catch (NotFound $e) {
-            throw DeliveryAddressNotFound::byId($id);
+            $deliveryAddress = null;
         }
 
         return $deliveryAddress;
@@ -128,5 +128,20 @@ final class Basket
         }
 
         return $belongs;
+    }
+
+    public function getPayment(string $id): ?PaymentDataType
+    {
+        try {
+            /** @var PaymentDataType $payment */
+            $payment = $this->repository->getById(
+                $id,
+                PaymentDataType::class
+            );
+        } catch (NotFound $exception) {
+            $payment = null;
+        }
+
+        return $payment;
     }
 }

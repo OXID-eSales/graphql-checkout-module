@@ -112,6 +112,21 @@ final class Basket
         return $deliveryAddress;
     }
 
+    public function getPayment(string $id): ?PaymentDataType
+    {
+        try {
+            /** @var PaymentDataType $payment */
+            $payment = $this->repository->getById(
+                $id,
+                PaymentDataType::class
+            );
+        } catch (NotFound $exception) {
+            $payment = null;
+        }
+
+        return $payment;
+    }
+
     private function deliveryAddressBelongsToUser(string $deliveryAddressId): bool
     {
         $belongs          = false;
@@ -128,20 +143,5 @@ final class Basket
         }
 
         return $belongs;
-    }
-
-    public function getPayment(string $id): ?PaymentDataType
-    {
-        try {
-            /** @var PaymentDataType $payment */
-            $payment = $this->repository->getById(
-                $id,
-                PaymentDataType::class
-            );
-        } catch (NotFound $exception) {
-            $payment = null;
-        }
-
-        return $payment;
     }
 }

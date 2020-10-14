@@ -32,6 +32,8 @@ final class DeliveryAddressCest extends BaseCest
 
     private const WRONG_DELIVERY_ADDRESS_ID = 'address_otheruser';
 
+    private const BASKET_WITH_ADDRESS_ID = 'basket_user_address_payment';
+
     public function _after(AcceptanceTester $I): void
     {
         $I->logout();
@@ -108,6 +110,23 @@ final class DeliveryAddressCest extends BaseCest
         $I->seeResponseCodeIs(HttpCode::NOT_FOUND);
     }
 
+    public function getBasketDeliveryAddress(AcceptanceTester $I): void
+    {
+        $I->login(self::USERNAME, self::PASSWORD);
+
+        $I->sendGQLQuery(
+            $this->basketDeliveryAddress(self::BASKET_WITH_ADDRESS_ID)
+        );
+
+        $I->seeResponseCodeIs(HttpCode::OK);
+        $I->seeResponseIsJson();
+
+        $result = $I->grabJsonResponseAsArray();
+        $basket = $result['data']['basket'];
+
+        $I->assertSame(self::DELIVERY_ADDRESS_ID, $basket['deliveryAddress']['id']);
+    }
+
     private function basketSetDeliveryAddress(string $basketId, string $deliveryAddressId): string
     {
         return 'mutation {
@@ -115,6 +134,18 @@ final class DeliveryAddressCest extends BaseCest
                 owner {
                     firstName
                 }
+                deliveryAddress {
+                    id
+                }
+            }
+        }';
+    }
+
+    private function basketDeliveryAddress(string $basketId): string
+    {
+        return 'query {
+            basket(id: "' . $basketId . '") {
+                id
                 deliveryAddress {
                     id
                 }

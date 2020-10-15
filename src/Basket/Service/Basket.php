@@ -19,11 +19,13 @@ use OxidEsales\GraphQL\Account\Basket\Exception\BasketNotFound;
 use OxidEsales\GraphQL\Account\Basket\Service\Basket as AccountBasketService;
 use OxidEsales\GraphQL\Account\Country\Service\Country as CountryService;
 use OxidEsales\GraphQL\Account\Customer\Service\Customer as CustomerService;
+use OxidEsales\GraphQL\Account\Payment\DataType\Payment as PaymentDataType;
 use OxidEsales\GraphQL\Base\Exception\InvalidToken;
 use OxidEsales\GraphQL\Base\Service\Authentication;
 use OxidEsales\GraphQL\Base\Service\Authorization;
 use OxidEsales\GraphQL\Catalogue\Shared\Infrastructure\Repository as Repository;
 use OxidEsales\GraphQL\Checkout\Basket\Infrastructure\Basket as BasketInfrastructure;
+use OxidEsales\GraphQL\Checkout\DeliverySet\DataType\DeliverySet as DeliverySetDataType;
 use OxidEsales\GraphQL\Checkout\DeliverySet\Exception\UnavailableDeliverySet;
 use OxidEsales\GraphQL\Checkout\Payment\Exception\PaymentValidationFailed;
 use OxidEsales\GraphQL\Checkout\Payment\Exception\UnavailablePayment;
@@ -188,6 +190,50 @@ final class Basket
         $this->basketInfrastructure->setDeliverySet($basket, (string) $deliveryId->val());
 
         return $basket;
+    }
+
+    /**
+     * @return DeliverySetDataType[]
+     */
+    public function getBasketDeliveries(ID $basketId): array
+    {
+        $basket    = $this->getBasketById($basketId);
+        $customer  = $this->customerService->customer((string) $basket->getUserId()->val());
+        $countryId = $this->basketInfrastructure->getBasketDeliveryCountryId($basket);
+        $country   = $this->countryService->country($countryId);
+
+        return $this->basketInfrastructure->getBasketAvailableDeliverySets(
+            $customer,
+            $basket,
+            $country
+        );
+    }
+
+    /**
+     * @return PaymentDataType[]
+     */
+    public function getBasketPayments(ID $basketId): array
+    {
+        $basket    = $this->getBasketById($basketId);
+        $customer  = $this->customerService->customer((string) $basket->getUserId()->val());
+        $countryId = $this->basketInfrastructure->getBasketDeliveryCountryId($basket);
+        $country   = $this->countryService->country($countryId);
+
+        $deliveries = $this->basketInfrastructure->getBasketAvailableDeliverySets(
+            $customer,
+            $basket,
+            $country
+        );
+
+        $result = [];
+
+        foreach ($deliveries as $delivery) {
+            $payments = $delivery->getPaymentTypes();
+
+            $result = array_merge($result, $payments);
+        }
+
+        return array_unique($result, SORT_REGULAR);
     }
 
     private function deliveryAddressBelongsToUser(string $deliveryAddressId): bool

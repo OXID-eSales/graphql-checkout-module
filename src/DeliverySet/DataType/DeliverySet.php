@@ -68,6 +68,14 @@ final class DeliverySet implements DataType
         return $this->paymentTypes;
     }
 
+    /**
+     * @Field()
+     */
+    public function getPosition(): int
+    {
+        return (int) $this->deliverySetModel->getFieldData('oxsort');
+    }
+
     public static function getModelClass(): string
     {
         return EshopDeliverySetModel::class;

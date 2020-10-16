@@ -10,9 +10,12 @@ declare(strict_types=1);
 namespace OxidEsales\GraphQL\Checkout\Basket\Service;
 
 use OxidEsales\GraphQL\Account\Address\DataType\DeliveryAddress;
+use OxidEsales\GraphQL\Account\Address\Exception\DeliveryAddressNotFound;
+use OxidEsales\GraphQL\Account\Address\Service\DeliveryAddress as DeliveryAddressService;
 use OxidEsales\GraphQL\Account\Basket\DataType\Basket;
 use OxidEsales\GraphQL\Account\Payment\DataType\Payment;
-use OxidEsales\GraphQL\Checkout\Basket\Service\Basket as BasketService;
+use OxidEsales\GraphQL\Account\Payment\Exception\PaymentNotFound;
+use OxidEsales\GraphQL\Account\Payment\Service\Payment as PaymentService;
 use TheCodingMachine\GraphQLite\Annotations\ExtendType;
 use TheCodingMachine\GraphQLite\Annotations\Field;
 
@@ -21,13 +24,18 @@ use TheCodingMachine\GraphQLite\Annotations\Field;
  */
 final class BasketRelationService
 {
-    /** @var BasketService */
-    private $basketService;
+    /** @var DeliveryAddressService */
+    private $deliveryAddressService;
+
+    /** @var PaymentService */
+    private $paymentService;
 
     public function __construct(
-        BasketService $basketService
+        DeliveryAddressService $deliveryAddressService,
+        PaymentService $paymentService
     ) {
-        $this->basketService = $basketService;
+        $this->deliveryAddressService = $deliveryAddressService;
+        $this->paymentService         = $paymentService;
     }
 
     /**
@@ -37,7 +45,17 @@ final class BasketRelationService
     {
         $addressId = (string) $basket->getEshopModel()->getFieldData('oegql_deladdressid');
 
-        return $this->basketService->getDeliveryAddress($addressId);
+        if (empty($addressId)) {
+            return null;
+        }
+
+        try {
+            $deliveryAddress = $this->deliveryAddressService->getDeliveryAddress($addressId);
+        } catch (DeliveryAddressNotFound $e) {
+            $deliveryAddress = null;
+        }
+
+        return $deliveryAddress;
     }
 
     /**
@@ -47,6 +65,16 @@ final class BasketRelationService
     {
         $paymentId = (string) $basket->getEshopModel()->getFieldData('oegql_paymentid');
 
-        return $this->basketService->getPayment($paymentId);
+        if (empty($paymentId)) {
+            return null;
+        }
+
+        try {
+            $payment = $this->paymentService->payment($paymentId);
+        } catch (PaymentNotFound $e) {
+            $payment = null;
+        }
+
+        return $payment;
     }
 }

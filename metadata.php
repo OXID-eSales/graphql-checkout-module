@@ -16,7 +16,7 @@ $sMetadataVersion = '2.0';
  * Module information
  */
 $aModule = [
-    'id'            => 'oe/graphql-checkout',
+    'id'            => 'oe_graphql_checkout',
     'title'         => [
         'de'        =>  'GraphQL Zur Kasse',
         'en'        =>  'GraphQL Checkout',

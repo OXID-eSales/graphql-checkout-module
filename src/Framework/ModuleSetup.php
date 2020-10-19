@@ -18,6 +18,6 @@ final class ModuleSetup
     {
         $migrations = (new MigrationsBuilder())->build();
 
-        $migrations->execute(Migrations::MIGRATE_COMMAND, 'oe/graphql-checkout');
+        $migrations->execute(Migrations::MIGRATE_COMMAND, 'oe_graphql_checkout');
     }
 }

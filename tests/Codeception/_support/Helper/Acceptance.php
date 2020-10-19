@@ -18,6 +18,6 @@ final class Acceptance extends \Codeception\Module
 {
     public function _beforeSuite($settings = []): void // phpcs:ignore PSR2.Methods.MethodDeclaration.Underscore
     {
-        exec((new Facts())->getShopRootPath() . '/bin/oe-console oe:module:activate oe/graphql-checkout');
+        exec((new Facts())->getShopRootPath() . '/bin/oe-console oe:module:activate oe_graphql_checkout');
     }
 }

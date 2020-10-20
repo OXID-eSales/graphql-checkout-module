@@ -13,6 +13,7 @@ use OxidEsales\GraphQL\Account\Basket\DataType\Basket as BasketDataType;
 use OxidEsales\GraphQL\Checkout\Basket\Service\Basket as BasketService;
 use TheCodingMachine\GraphQLite\Annotations\Logged;
 use TheCodingMachine\GraphQLite\Annotations\Mutation;
+use TheCodingMachine\GraphQLite\Types\ID;
 
 final class Basket
 {
@@ -32,5 +33,23 @@ final class Basket
     public function basketSetDeliveryAddress(string $basketId, string $deliveryAddressId): BasketDataType
     {
         return $this->basketService->setDeliveryAddress($basketId, $deliveryAddressId);
+    }
+
+    /**
+     * @Mutation()
+     * @Logged()
+     */
+    public function basketSetPayment(ID $basketId, ID $paymentId): BasketDataType
+    {
+        return $this->basketService->setPayment($basketId, $paymentId);
+    }
+
+    /**
+     * @Mutation()
+     * @Logged()
+     */
+    public function basketSetDelivery(ID $basketId, ID $deliverySetId): BasketDataType
+    {
+        return $this->basketService->setDeliverySet($basketId, $deliverySetId);
     }
 }

@@ -23,7 +23,7 @@ final class Version20201006152500 extends AbstractMigration
             ADD COLUMN `OEGQL_DELADDRESSID` char(32)
                 character set latin1 collate latin1_general_ci DEFAULT NULL
                 COMMENT 'Relation to oxaddress.oxid, if empty the invoice address from oxuser table is used',
-            ADD COLUMN `OEGQL_DELIVERYSETID` char(32)
+            ADD COLUMN `OEGQL_DELIVERYMETHODID` char(32)
                 character set latin1 collate latin1_general_ci DEFAULT NULL
                 COMMENT 'Relation to oxdeliveryset.oxid';");
     }

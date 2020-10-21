@@ -14,10 +14,11 @@ use OxidEsales\GraphQL\Checkout\Tests\Codeception\Acceptance\BaseCest;
 use OxidEsales\GraphQL\Checkout\Tests\Codeception\AcceptanceTester;
 
 /**
+ * @group oe_graphql_checkout
  * @group basket
  * @group delivery
  */
-final class BasketDeliveryCest extends BaseCest
+final class BasketDeliveryMethodCest extends BaseCest
 {
     private const USERNAME = 'user@oxid-esales.com';
 
@@ -33,7 +34,7 @@ final class BasketDeliveryCest extends BaseCest
 
         $I->sendGQLQuery(
             'query {
-              basketDeliveries(basketId: "' . $basketId . '") {
+              basketDeliveryMethods(basketId: "' . $basketId . '") {
                 id
                 title
               }
@@ -52,7 +53,7 @@ final class BasketDeliveryCest extends BaseCest
                 'id'    => '_deliveryset',
                 'title' => 'graphql set',
             ],
-        ], $result['data']['basketDeliveries']);
+        ], $result['data']['basketDeliveryMethods']);
     }
 
     private function basketCreate(AcceptanceTester $I)

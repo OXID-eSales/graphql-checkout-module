@@ -7,14 +7,14 @@
 
 declare(strict_types=1);
 
-namespace OxidEsales\GraphQL\Checkout\DeliverySet\Exception;
+namespace OxidEsales\GraphQL\Checkout\DeliveryMethod\Exception;
 
 use Exception;
 use GraphQL\Error\ClientAware;
 use OxidEsales\GraphQL\Base\Exception\ErrorCategories;
 use OxidEsales\GraphQL\Base\Exception\HttpErrorInterface;
 
-final class UnavailableDeliverySet extends Exception implements ClientAware, HttpErrorInterface
+final class UnavailableDeliveryMethod extends Exception implements ClientAware, HttpErrorInterface
 {
     public function getHttpStatus(): int
     {

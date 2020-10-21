@@ -30,8 +30,8 @@ final class PaymentValidationFailed extends Exception implements ClientAware, Ht
         return 'validation';
     }
 
-    public static function byDeliverySet(): self
+    public static function byDeliveryMethod(): self
     {
-        return new self('Delivery set must be provided!');
+        return new self('Delivery method must be provided!');
     }
 }

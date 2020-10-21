@@ -25,8 +25,8 @@ use OxidEsales\GraphQL\Base\Service\Authentication;
 use OxidEsales\GraphQL\Base\Service\Authorization;
 use OxidEsales\GraphQL\Catalogue\Shared\Infrastructure\Repository as Repository;
 use OxidEsales\GraphQL\Checkout\Basket\Infrastructure\Basket as BasketInfrastructure;
-use OxidEsales\GraphQL\Checkout\DeliverySet\DataType\DeliverySet as DeliverySetDataType;
-use OxidEsales\GraphQL\Checkout\DeliverySet\Exception\UnavailableDeliverySet;
+use OxidEsales\GraphQL\Checkout\DeliveryMethod\DataType\DeliveryMethod as DeliveryMethodDataType;
+use OxidEsales\GraphQL\Checkout\DeliveryMethod\Exception\UnavailableDeliveryMethod;
 use OxidEsales\GraphQL\Checkout\Payment\Exception\PaymentValidationFailed;
 use OxidEsales\GraphQL\Checkout\Payment\Exception\UnavailablePayment;
 use TheCodingMachine\GraphQLite\Types\ID;
@@ -110,15 +110,15 @@ final class Basket
     }
 
     /**
-     * @throws UnavailableDeliverySet
+     * @throws UnavailableDeliveryMethod
      */
-    public function setDeliverySet(ID $basketId, ID $deliverySetId): BasketDataType
+    public function setDeliveryMethod(ID $basketId, ID $deliveryMethodId): BasketDataType
     {
-        if (!$this->isDeliverySetAvailableForBasket($basketId, $deliverySetId)) {
-            throw UnavailableDeliverySet::byId((string) $deliverySetId->val());
+        if (!$this->isDeliveryMethodAvailableForBasket($basketId, $deliveryMethodId)) {
+            throw UnavailableDeliveryMethod::byId((string) $deliveryMethodId->val());
         }
 
-        return $this->setDeliverySetIdToBasket($basketId, $deliverySetId);
+        return $this->setDeliveryMethodIdToBasket($basketId, $deliveryMethodId);
     }
 
     /**
@@ -126,24 +126,24 @@ final class Basket
      */
     public function isPaymentMethodAvailableForBasket(ID $basketId, ID $paymentId): bool
     {
-        $basket        = $this->getBasketById($basketId);
-        $deliverySetId = $basket->getEshopModel()->getFieldData('oegql_deliverysetid');
+        $basket           = $this->getBasketById($basketId);
+        $deliveryMethodId = $basket->getEshopModel()->getFieldData('oegql_deliverymethodid');
 
-        if (!$deliverySetId) {
-            throw PaymentValidationFailed::byDeliverySet();
+        if (!$deliveryMethodId) {
+            throw PaymentValidationFailed::byDeliveryMethod();
         }
 
         $customer  = $this->customerService->customer((string) $basket->getUserId()->val());
         $countryId = $this->basketInfrastructure->getBasketDeliveryCountryId($basket);
         $country   = $this->countryService->country($countryId);
 
-        $deliveries = $this->basketInfrastructure->getBasketAvailableDeliverySets(
+        $deliveries = $this->basketInfrastructure->getBasketAvailableDeliveryMethods(
             $customer,
             $basket,
             $country
         );
 
-        $paymentMethods = isset($deliveries[$deliverySetId]) ? $deliveries[$deliverySetId]->getPaymentTypes() : [];
+        $paymentMethods = isset($deliveries[$deliveryMethodId]) ? $deliveries[$deliveryMethodId]->getPaymentTypes() : [];
 
         return array_key_exists((string) $paymentId->val(), $paymentMethods);
     }
@@ -163,46 +163,46 @@ final class Basket
     /**
      * Check if delivery set is available for user basket with concrete id
      */
-    public function isDeliverySetAvailableForBasket(ID $basketId, ID $deliverySetId): bool
+    public function isDeliveryMethodAvailableForBasket(ID $basketId, ID $deliveryMethodId): bool
     {
         $basket    = $this->getBasketById($basketId);
         $customer  = $this->customerService->customer((string) $basket->getUserId()->val());
         $countryId = $this->basketInfrastructure->getBasketDeliveryCountryId($basket);
         $country   = $this->countryService->country($countryId);
 
-        $deliveries = $this->basketInfrastructure->getBasketAvailableDeliverySets(
+        $deliveries = $this->basketInfrastructure->getBasketAvailableDeliveryMethods(
             $customer,
             $basket,
             $country
         );
 
-        return array_key_exists((string) $deliverySetId->val(), $deliveries);
+        return array_key_exists((string) $deliveryMethodId->val(), $deliveries);
     }
 
     /**
      * Update delivery set id for user basket
      * Resets payment id as it may be not available for new delivery set
      */
-    public function setDeliverySetIdToBasket(ID $basketId, ID $deliveryId): BasketDataType
+    public function setDeliveryMethodIdToBasket(ID $basketId, ID $deliveryId): BasketDataType
     {
         $basket = $this->getBasketById($basketId);
 
-        $this->basketInfrastructure->setDeliverySet($basket, (string) $deliveryId->val());
+        $this->basketInfrastructure->setDeliveryMethod($basket, (string) $deliveryId->val());
 
         return $basket;
     }
 
     /**
-     * @return DeliverySetDataType[]
+     * @return DeliveryMethodDataType[]
      */
-    public function getBasketDeliveries(ID $basketId): array
+    public function getBasketDeliveryMethods(ID $basketId): array
     {
         $basket    = $this->getBasketById($basketId);
         $customer  = $this->customerService->customer((string) $basket->getUserId()->val());
         $countryId = $this->basketInfrastructure->getBasketDeliveryCountryId($basket);
         $country   = $this->countryService->country($countryId);
 
-        return $this->basketInfrastructure->getBasketAvailableDeliverySets(
+        return $this->basketInfrastructure->getBasketAvailableDeliveryMethods(
             $customer,
             $basket,
             $country
@@ -219,7 +219,7 @@ final class Basket
         $countryId = $this->basketInfrastructure->getBasketDeliveryCountryId($basket);
         $country   = $this->countryService->country($countryId);
 
-        $deliveries = $this->basketInfrastructure->getBasketAvailableDeliverySets(
+        $deliveries = $this->basketInfrastructure->getBasketAvailableDeliveryMethods(
             $customer,
             $basket,
             $country

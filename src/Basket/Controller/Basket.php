@@ -12,7 +12,7 @@ namespace OxidEsales\GraphQL\Checkout\Basket\Controller;
 use OxidEsales\GraphQL\Account\Basket\DataType\Basket as BasketDataType;
 use OxidEsales\GraphQL\Account\Payment\DataType\Payment as PaymentDataType;
 use OxidEsales\GraphQL\Checkout\Basket\Service\Basket as BasketService;
-use OxidEsales\GraphQL\Checkout\DeliverySet\DataType\DeliverySet as DeliverySetDataType;
+use OxidEsales\GraphQL\Checkout\DeliveryMethod\DataType\DeliveryMethod as DeliveryMethodDataType;
 use TheCodingMachine\GraphQLite\Annotations\Logged;
 use TheCodingMachine\GraphQLite\Annotations\Mutation;
 use TheCodingMachine\GraphQLite\Annotations\Query;
@@ -51,23 +51,25 @@ final class Basket
      * @Mutation()
      * @Logged()
      */
-    public function basketSetDelivery(ID $basketId, ID $deliverySetId): BasketDataType
+    public function basketSetDeliveryMethod(ID $basketId, ID $deliveryMethodId): BasketDataType
     {
-        return $this->basketService->setDeliverySet($basketId, $deliverySetId);
+        return $this->basketService->setDeliveryMethod($basketId, $deliveryMethodId);
     }
 
     /**
      * @Query
      * @Logged()
      *
-     * @return DeliverySetDataType[]
+     * @return DeliveryMethodDataType[]
      */
-    public function basketDeliveries(ID $basketId): array
+    public function basketDeliveryMethods(ID $basketId): array
     {
-        return $this->basketService->getBasketDeliveries($basketId);
+        return $this->basketService->getBasketDeliveryMethods($basketId);
     }
 
     /**
+     * Returns all payments that can be used for particular basket.
+     *
      * @Query
      * @Logged()
      *

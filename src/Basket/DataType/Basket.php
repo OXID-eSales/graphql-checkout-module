@@ -25,11 +25,11 @@ final class Basket
     /**
      * @Field()
      */
-    public function deliverySetId(AccountBasket $basket): ID
+    public function deliveryMethodId(AccountBasket $basket): ID
     {
-        $deliverySetId = (string) $basket->getEshopModel()->getFieldData('oegql_deliverysetid');
+        $deliveryMethodId = (string) $basket->getEshopModel()->getFieldData('oegql_deliverymethodid');
 
-        return new ID($deliverySetId);
+        return new ID($deliveryMethodId);
     }
 
     /**

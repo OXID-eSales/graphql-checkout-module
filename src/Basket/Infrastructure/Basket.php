@@ -19,7 +19,7 @@ use OxidEsales\GraphQL\Account\Customer\DataType\Customer as CustomerDataType;
 use OxidEsales\GraphQL\Account\Payment\DataType\Payment as PaymentDataType;
 use OxidEsales\GraphQL\Account\Shared\Infrastructure\Basket as AccountBasketInfrastructure;
 use OxidEsales\GraphQL\Catalogue\Shared\Infrastructure\Repository;
-use OxidEsales\GraphQL\Checkout\DeliverySet\DataType\DeliverySet as DeliverySetDataType;
+use OxidEsales\GraphQL\Checkout\DeliveryMethod\DataType\DeliveryMethod as DeliveryMethodDataType;
 
 final class Basket
 {
@@ -65,25 +65,25 @@ final class Basket
     }
 
     /**
-     * Update delivery set id for user basket
-     * Resets payment id as it may be not available for new delivery set
+     * Update delivery method id for user basket
+     * Resets payment id as it may be not available for new delivery method
      */
-    public function setDeliverySet(BasketDataType $basket, string $deliverySetId): bool
+    public function setDeliveryMethod(BasketDataType $basket, string $deliveryMethodId): bool
     {
         $model = $basket->getEshopModel();
 
         $model->assign([
-            'OEGQL_DELIVERYSETID' => $deliverySetId,
-            'OEGQL_PAYMENTID'     => '',
+            'OEGQL_DELIVERYMETHODID' => $deliveryMethodId,
+            'OEGQL_PAYMENTID'        => '',
         ]);
 
         return $this->repository->saveModel($model);
     }
 
     /**
-     * @return DeliverySetDataType[]
+     * @return DeliveryMethodDataType[]
      */
-    public function getBasketAvailableDeliverySets(
+    public function getBasketAvailableDeliveryMethods(
         CustomerDataType $customer,
         BasketDataType $userBasket,
         CountryDataType $country
@@ -98,23 +98,23 @@ final class Basket
         $deliverySetListArray = $deliverySetList->getDeliverySetList($userModel, (string) $country->getId());
 
         $result = [];
-        /** @var EshopDeliverySetModel $set */
-        foreach ($deliverySetListArray as $setKey => $set) {
+        /** @var EshopDeliverySetModel $deliverySet */
+        foreach ($deliverySetListArray as $setKey => $deliverySet) {
             /** @phpstan-ignore-next-line */
-            [$allSets, $activeShipSet, $paymentList] = $deliverySetList->getDeliverySetData(
+            [$allMethods, $activeShipSet, $paymentList] = $deliverySetList->getDeliverySetData(
                 $setKey,
                 $userModel,
                 $basketModel
             );
 
-            $deliverySetPaymentMethods = [];
+            $deliveryMethodPayments = [];
 
             foreach ($paymentList as $paymentModel) {
-                $deliverySetPaymentMethods[$paymentModel->getId()] = new PaymentDataType($paymentModel);
+                $deliveryMethodPayments[$paymentModel->getId()] = new PaymentDataType($paymentModel);
             }
 
-            if (!empty($deliverySetPaymentMethods)) {
-                $result[$setKey] = new DeliverySetDataType($set, $deliverySetPaymentMethods);
+            if (!empty($deliveryMethodPayments)) {
+                $result[$setKey] = new DeliveryMethodDataType($deliverySet, $deliveryMethodPayments);
             }
         }
 

@@ -59,6 +59,8 @@ final class BasketRelationService
     }
 
     /**
+     * Returns selected payment for current basket.
+     *
      * @Field()
      */
     public function payment(Basket $basket): ?Payment

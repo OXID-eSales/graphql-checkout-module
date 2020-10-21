@@ -79,7 +79,7 @@ final class BasketSetPaymentMutationCest extends BaseCest
         $I->assertSame(self::AVAILABLE_PAYMENT_ID, $basket['paymentId']);
     }
 
-    public function setPaymentToBasketWithoutSetDeliverySet(AcceptanceTester $I): void
+    public function setPaymentToBasketWithoutSetDeliveryMethod(AcceptanceTester $I): void
     {
         $I->sendGQLQuery(
             $this->basketSetPayment(self::AVAILABLE_PAYMENT_ID)
@@ -124,7 +124,7 @@ final class BasketSetPaymentMutationCest extends BaseCest
         $I->login(self::USERNAME, self::PASSWORD);
     }
 
-    public function setDeliverySetToNonExistingBasket(AcceptanceTester $I): void
+    public function setDeliveryMethodToNonExistingBasket(AcceptanceTester $I): void
     {
         $I->sendGQLQuery(
             $this->basketSetPayment(self::AVAILABLE_PAYMENT_ID, self::NON_EXISTING_BASKET_ID)
@@ -166,13 +166,13 @@ final class BasketSetPaymentMutationCest extends BaseCest
         $this->basketId = $result['data']['basketCreate']['id'];
     }
 
-    private function basketSetDelivery(AcceptanceTester $I, string $deliverySetId): void
+    private function basketSetDelivery(AcceptanceTester $I, string $deliveryMethodId): void
     {
         $I->sendGQLQuery(
             'mutation {
-                basketSetDelivery(basketId: "' . $this->basketId . '", deliverySetId: "' . $deliverySetId . '") {
+                basketSetDeliveryMethod(basketId: "' . $this->basketId . '", deliveryMethodId: "' . $deliveryMethodId . '") {
                     id
-                    deliverySetId
+                    deliveryMethodId
                 }
             }'
         );

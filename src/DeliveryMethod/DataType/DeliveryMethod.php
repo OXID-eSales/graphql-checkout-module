@@ -7,7 +7,7 @@
 
 declare(strict_types=1);
 
-namespace OxidEsales\GraphQL\Checkout\DeliverySet\DataType;
+namespace OxidEsales\GraphQL\Checkout\DeliveryMethod\DataType;
 
 use OxidEsales\Eshop\Application\Model\DeliverySet as EshopDeliverySetModel;
 use OxidEsales\GraphQL\Account\Payment\DataType\Payment as PaymentDataType;
@@ -19,7 +19,7 @@ use TheCodingMachine\GraphQLite\Types\ID;
 /**
  * @Type()
  */
-final class DeliverySet implements DataType
+final class DeliveryMethod implements DataType
 {
     /** @var EshopDeliverySetModel */
     private $deliverySetModel;

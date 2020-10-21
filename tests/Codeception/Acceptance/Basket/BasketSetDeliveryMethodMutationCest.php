@@ -16,10 +16,10 @@ use OxidEsales\GraphQL\Checkout\Tests\Codeception\AcceptanceTester;
 
 /**
  * @group oe_graphql_checkout
- * @group delivery-set
+ * @group delivery-method
  * @group basket
  */
-final class BasketSetDeliveryMutationCest extends BaseCest
+final class BasketSetDeliveryMethodMutationCest extends BaseCest
 {
     private const USERNAME = 'user@oxid-esales.com';
 
@@ -27,11 +27,11 @@ final class BasketSetDeliveryMutationCest extends BaseCest
 
     private const PASSWORD = 'useruser';
 
-    private const BASKET_TITLE = 'deliverysetbasket';
+    private const BASKET_TITLE = 'deliverymethodbasket';
 
     private const AVAILABLE_DELIVERY_SET_ID = '_deliveryset';
 
-    private const UNAVAILABLE_DELIVERY_SET_ID = '_unavailabledeliveryset';
+    private const UNAVAILABLE_DELIVERY_SET_ID = '_unavailabledeliverymethod';
 
     private const NON_EXISTING_DELIVERY_SET_ID = 'non-existing-delivery-set-id';
 
@@ -53,7 +53,7 @@ final class BasketSetDeliveryMutationCest extends BaseCest
         parent::_after($I);
     }
 
-    public function setAvailableDeliverySetToBasket(AcceptanceTester $I): void
+    public function setAvailableDeliveryMethodToBasket(AcceptanceTester $I): void
     {
         $I->sendGQLQuery(
             $this->basketSetDelivery(self::AVAILABLE_DELIVERY_SET_ID)
@@ -63,13 +63,13 @@ final class BasketSetDeliveryMutationCest extends BaseCest
         $I->seeResponseIsJson();
 
         $result = $I->grabJsonResponseAsArray();
-        $basket = $result['data']['basketSetDelivery'];
+        $basket = $result['data']['basketSetDeliveryMethod'];
 
         $I->assertSame($this->basketId, $basket['id']);
-        $I->assertSame(self::AVAILABLE_DELIVERY_SET_ID, $basket['deliverySetId']);
+        $I->assertSame(self::AVAILABLE_DELIVERY_SET_ID, $basket['deliveryMethodId']);
     }
 
-    public function setUnavailableDeliverySetToBasket(AcceptanceTester $I): void
+    public function setUnavailableDeliveryMethodToBasket(AcceptanceTester $I): void
     {
         $I->sendGQLQuery(
             $this->basketSetDelivery(self::UNAVAILABLE_DELIVERY_SET_ID)
@@ -78,7 +78,7 @@ final class BasketSetDeliveryMutationCest extends BaseCest
         $I->seeResponseCodeIs(HttpCode::BAD_REQUEST);
     }
 
-    public function setNonExistingDeliverySetToBasket(AcceptanceTester $I): void
+    public function setNonExistingDeliveryMethodToBasket(AcceptanceTester $I): void
     {
         $I->sendGQLQuery(
             $this->basketSetDelivery(self::NON_EXISTING_DELIVERY_SET_ID)
@@ -87,7 +87,7 @@ final class BasketSetDeliveryMutationCest extends BaseCest
         $I->seeResponseCodeIs(HttpCode::BAD_REQUEST);
     }
 
-    public function setDeliverySetToWrongBasket(AcceptanceTester $I): void
+    public function setDeliveryMethodToWrongBasket(AcceptanceTester $I): void
     {
         $I->login(self::OTHER_USERNAME, self::PASSWORD);
 
@@ -101,7 +101,7 @@ final class BasketSetDeliveryMutationCest extends BaseCest
         $I->login(self::USERNAME, self::PASSWORD);
     }
 
-    public function setDeliverySetToNonExistingBasket(AcceptanceTester $I): void
+    public function setDeliveryMethodToNonExistingBasket(AcceptanceTester $I): void
     {
         $I->sendGQLQuery(
             $this->basketSetDelivery(self::AVAILABLE_DELIVERY_SET_ID, self::NON_EXISTING_BASKET_ID)
@@ -139,14 +139,14 @@ final class BasketSetDeliveryMutationCest extends BaseCest
         $I->seeResponseCodeIs(HttpCode::OK);
     }
 
-    private function basketSetDelivery(string $deliverySetId, ?string $basketId = null): string
+    private function basketSetDelivery(string $deliveryMethodId, ?string $basketId = null): string
     {
         $basketId = $basketId ?: $this->basketId;
 
         return 'mutation {
-            basketSetDelivery(basketId: "' . $basketId . '", deliverySetId: "' . $deliverySetId . '") {
+            basketSetDeliveryMethod(basketId: "' . $basketId . '", deliveryMethodId: "' . $deliveryMethodId . '") {
                 id
-                deliverySetId
+                deliveryMethodId
             }
         }';
     }

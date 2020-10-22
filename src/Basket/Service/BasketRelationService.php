@@ -16,6 +16,9 @@ use OxidEsales\GraphQL\Account\Basket\DataType\Basket;
 use OxidEsales\GraphQL\Account\Payment\DataType\Payment;
 use OxidEsales\GraphQL\Account\Payment\Exception\PaymentNotFound;
 use OxidEsales\GraphQL\Account\Payment\Service\Payment as PaymentService;
+use OxidEsales\GraphQL\Checkout\DeliveryMethod\DataType\DeliveryMethod;
+use OxidEsales\GraphQL\Checkout\DeliveryMethod\Exception\DeliveryMethodNotFound;
+use OxidEsales\GraphQL\Checkout\DeliveryMethod\Service\DeliveryMethod as DeliveryMethodService;
 use TheCodingMachine\GraphQLite\Annotations\ExtendType;
 use TheCodingMachine\GraphQLite\Annotations\Field;
 
@@ -30,12 +33,17 @@ final class BasketRelationService
     /** @var PaymentService */
     private $paymentService;
 
+    /** @var DeliveryMethodService */
+    private $deliveryMethodService;
+
     public function __construct(
         DeliveryAddressService $deliveryAddressService,
-        PaymentService $paymentService
+        PaymentService $paymentService,
+        DeliveryMethodService $deliveryMethodService
     ) {
         $this->deliveryAddressService = $deliveryAddressService;
         $this->paymentService         = $paymentService;
+        $this->deliveryMethodService  = $deliveryMethodService;
     }
 
     /**
@@ -78,5 +86,27 @@ final class BasketRelationService
         }
 
         return $payment;
+    }
+
+    /**
+     * Returns selected delivery method for current basket.
+     *
+     * @Field()
+     */
+    public function deliveryMethod(Basket $basket): ?DeliveryMethod
+    {
+        $deliveryMethodId = (string) $basket->getEshopModel()->getFieldData('oegql_deliverymethodid');
+
+        if (empty($deliveryMethodId)) {
+            return null;
+        }
+
+        try {
+            $deliveryMethod = $this->deliveryMethodService->getDeliveryMethod($deliveryMethodId);
+        } catch (DeliveryMethodNotFound $e) {
+            $deliveryMethod = null;
+        }
+
+        return $deliveryMethod;
     }
 }

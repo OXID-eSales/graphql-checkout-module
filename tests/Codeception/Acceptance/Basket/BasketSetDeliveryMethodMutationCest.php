@@ -66,7 +66,7 @@ final class BasketSetDeliveryMethodMutationCest extends BaseCest
         $basket = $result['data']['basketSetDeliveryMethod'];
 
         $I->assertSame($this->basketId, $basket['id']);
-        $I->assertSame(self::AVAILABLE_DELIVERY_SET_ID, $basket['deliveryMethodId']);
+        $I->assertSame(self::AVAILABLE_DELIVERY_SET_ID, $basket['deliveryMethod']['id']);
     }
 
     public function setUnavailableDeliveryMethodToBasket(AcceptanceTester $I): void
@@ -146,7 +146,9 @@ final class BasketSetDeliveryMethodMutationCest extends BaseCest
         return 'mutation {
             basketSetDeliveryMethod(basketId: "' . $basketId . '", deliveryMethodId: "' . $deliveryMethodId . '") {
                 id
-                deliveryMethodId
+                deliveryMethod {
+                    id
+                }
             }
         }';
     }

@@ -76,7 +76,7 @@ final class BasketSetPaymentMutationCest extends BaseCest
         $basket = $result['data']['basketSetPayment'];
 
         $I->assertSame($this->basketId, $basket['id']);
-        $I->assertSame(self::AVAILABLE_PAYMENT_ID, $basket['paymentId']);
+        $I->assertSame(self::AVAILABLE_PAYMENT_ID, $basket['payment']['id']);
     }
 
     public function setPaymentToBasketWithoutSetDeliveryMethod(AcceptanceTester $I): void
@@ -172,7 +172,6 @@ final class BasketSetPaymentMutationCest extends BaseCest
             'mutation {
                 basketSetDeliveryMethod(basketId: "' . $this->basketId . '", deliveryMethodId: "' . $deliveryMethodId . '") {
                     id
-                    deliveryMethodId
                 }
             }'
         );
@@ -198,7 +197,9 @@ final class BasketSetPaymentMutationCest extends BaseCest
         return 'mutation {
             basketSetPayment(basketId: "' . $basketId . '", paymentId: "' . $paymentId . '") {
                 id
-                paymentId
+                payment {
+                    id
+                }
             }
         }';
     }

@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace OxidEsales\GraphQL\Checkout\Tests\Codeception\Acceptance\Basket;
 
+use Codeception\Example;
 use Codeception\Util\HttpCode;
 use OxidEsales\GraphQL\Checkout\Tests\Codeception\Acceptance\BaseCest;
 use OxidEsales\GraphQL\Checkout\Tests\Codeception\AcceptanceTester;
@@ -33,6 +34,8 @@ final class DeliveryAddressCest extends BaseCest
     private const WRONG_DELIVERY_ADDRESS_ID = 'address_otheruser';
 
     private const BASKET_WITH_ADDRESS_ID = 'basket_user_address_payment';
+
+    private const BASKET_WITHOUT_ADDRESS_ID = 'basket_user_3';
 
     public function setDeliveryAddressToBasket(AcceptanceTester $I): void
     {
@@ -133,12 +136,18 @@ final class DeliveryAddressCest extends BaseCest
         $this->basketRemove($I, $basketId);
     }
 
-    public function getBasketDeliveryAddress(AcceptanceTester $I): void
+    /**
+     * @dataProvider basketDeliveryAddressProvider
+     */
+    public function getBasketDeliveryAddress(AcceptanceTester $I, Example $data): void
     {
+        $basketId  = $data['basketId'];
+        $addressId = $data['addressId'];
+
         $I->login(self::USERNAME, self::PASSWORD);
 
         $I->sendGQLQuery(
-            $this->basketDeliveryAddress(self::BASKET_WITH_ADDRESS_ID)
+            $this->basketDeliveryAddress($basketId)
         );
 
         $I->seeResponseCodeIs(HttpCode::OK);
@@ -147,7 +156,25 @@ final class DeliveryAddressCest extends BaseCest
         $result = $I->grabJsonResponseAsArray();
         $basket = $result['data']['basket'];
 
-        $I->assertSame(self::DELIVERY_ADDRESS_ID, $basket['deliveryAddress']['id']);
+        if ($addressId !== null) {
+            $I->assertSame($addressId, $basket['deliveryAddress']['id']);
+        } else {
+            $I->assertNull($basket['deliveryAddress']);
+        }
+    }
+
+    protected function basketDeliveryAddressProvider(): array
+    {
+        return [
+            [
+                'basketId'  => self::BASKET_WITH_ADDRESS_ID,
+                'addressId' => self::DELIVERY_ADDRESS_ID,
+            ],
+            [
+                'basketId'  => self::BASKET_WITHOUT_ADDRESS_ID,
+                'addressId' => null,
+            ],
+        ];
     }
 
     private function basketCreate(AcceptanceTester $I)

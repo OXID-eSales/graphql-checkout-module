@@ -33,12 +33,7 @@ final class BasketDeliveryMethodCest extends BaseCest
         $basketId = $this->basketCreate($I);
 
         $I->sendGQLQuery(
-            'query {
-              basketDeliveryMethods(basketId: "' . $basketId . '") {
-                id
-                title
-              }
-            }'
+            $this->basketDeliveryMethods($basketId)
         );
 
         $I->seeResponseCodeIs(HttpCode::OK);
@@ -56,6 +51,19 @@ final class BasketDeliveryMethodCest extends BaseCest
         ], $result['data']['basketDeliveryMethods']);
     }
 
+    public function getNonExistingBasketDeliveryMethods(AcceptanceTester $I): void
+    {
+        $I->login(self::USERNAME, self::PASSWORD);
+
+        $basketId = 'non-existing-basket';
+
+        $I->sendGQLQuery(
+            $this->basketDeliveryMethods($basketId)
+        );
+
+        $I->seeResponseCodeIs(HttpCode::NOT_FOUND);
+    }
+
     private function basketCreate(AcceptanceTester $I)
     {
         $I->sendGQLQuery(
@@ -70,5 +78,17 @@ final class BasketDeliveryMethodCest extends BaseCest
         $result = $I->grabJsonResponseAsArray();
 
         return $result['data']['basketCreate']['id'];
+    }
+
+    private function basketDeliveryMethods(string $basketId): string
+    {
+        return '
+            query {
+              basketDeliveryMethods(basketId: "' . $basketId . '") {
+                id
+                title
+              }
+            }
+        ';
     }
 }

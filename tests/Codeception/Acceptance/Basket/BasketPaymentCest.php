@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace OxidEsales\GraphQL\Checkout\Tests\Codeception\Acceptance\Basket;
 
+use Codeception\Example;
 use Codeception\Util\HttpCode;
 use OxidEsales\GraphQL\Checkout\Tests\Codeception\Acceptance\BaseCest;
 use OxidEsales\GraphQL\Checkout\Tests\Codeception\AcceptanceTester;
@@ -25,6 +26,49 @@ final class BasketPaymentCest extends BaseCest
     private const PASSWORD = 'useruser';
 
     private const BASKET_TITLE = 'basketpayments';
+
+    private const BASKET_WITH_PAYMENT_ID = 'basket_user_address_payment';
+
+    private const BASKET_WITHOUT_PAYMENT_ID = 'basket_user_3';
+
+    private const PAYMENT_ID = 'oxiddebitnote';
+
+    public function _after(AcceptanceTester $I): void
+    {
+        $I->logout();
+    }
+
+    /**
+     * @dataProvider basketPaymentProvider
+     */
+    public function getBasketPayment(AcceptanceTester $I, Example $data): void
+    {
+        $basketId  = $data['basketId'];
+        $paymentId = $data['paymentId'];
+
+        $I->login(self::USERNAME, self::PASSWORD);
+
+        $I->sendGQLQuery('query {
+            basket(id: "' . $basketId . '") {
+                id
+                payment {
+                    id
+                }
+            }
+        }');
+
+        $I->seeResponseCodeIs(HttpCode::OK);
+        $I->seeResponseIsJson();
+
+        $result = $I->grabJsonResponseAsArray();
+        $basket = $result['data']['basket'];
+
+        if ($paymentId !== null) {
+            $I->assertSame(self::PAYMENT_ID, $basket['payment']['id']);
+        } else {
+            $I->assertNull($basket['payment']);
+        }
+    }
 
     public function testBasketPayments(AcceptanceTester $I): void
     {
@@ -67,6 +111,38 @@ final class BasketPaymentCest extends BaseCest
                 'title' => 'GraphQL',
             ],
         ], $result['data']['basketPayments']);
+    }
+
+    public function testNonExistingBasketPayments(AcceptanceTester $I): void
+    {
+        $I->login(self::USERNAME, self::PASSWORD);
+
+        $basketId = 'non-existing-basket';
+
+        $I->sendGQLQuery(
+            'query {
+              basketPayments(basketId: "' . $basketId . '") {
+                id
+                title
+              }
+            }'
+        );
+
+        $I->seeResponseCodeIs(HttpCode::NOT_FOUND);
+    }
+
+    protected function basketPaymentProvider(): array
+    {
+        return [
+            [
+                'basketId'  => self::BASKET_WITH_PAYMENT_ID,
+                'paymentId' => self::PAYMENT_ID,
+            ],
+            [
+                'basketId'  => self::BASKET_WITHOUT_PAYMENT_ID,
+                'paymentId' => null,
+            ],
+        ];
     }
 
     private function basketCreate(AcceptanceTester $I)

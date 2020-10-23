@@ -10,9 +10,9 @@ declare(strict_types=1);
 namespace OxidEsales\GraphQL\Checkout\Tests\Codeception\Acceptance\Basket;
 
 use Codeception\Util\HttpCode;
-use TheCodingMachine\GraphQLite\Types\ID;
 use OxidEsales\GraphQL\Checkout\Tests\Codeception\Acceptance\BaseCest;
 use OxidEsales\GraphQL\Checkout\Tests\Codeception\AcceptanceTester;
+use TheCodingMachine\GraphQLite\Types\ID;
 
 /**
  * @group oe_graphql_checkout
@@ -22,6 +22,8 @@ use OxidEsales\GraphQL\Checkout\Tests\Codeception\AcceptanceTester;
 final class PlaceOrderCest extends BaseCest
 {
     private const USERNAME = 'user@oxid-esales.com';
+
+    private const OTHER_USERNAME = 'otheruser@oxid-esales.com';
 
     private const PASSWORD = 'useruser';
 
@@ -35,36 +37,116 @@ final class PlaceOrderCest extends BaseCest
 
     private const PAYMENT_TEST = 'oxidgraphql';
 
+    private const BASKET_NAME = 'my_cart';
+
+    private const EMPTY_BASKET_NAME = 'my_empty_cart';
+
     public function placeOrderUsingInvoiceAddress(AcceptanceTester $I): void
     {
+        $I->wantToTest('placing an order successfully with invoice address only');
         $I->login(self::USERNAME, self::PASSWORD);
 
         //prepare basket
-        $basketId = $this->createBasket($I, 'mycart');
+        $basketId = $this->createBasket($I, 'my_cart_one');
         $this->addProductToBasket($I, $basketId, self::PRODUCT_ID, 2);
         $this->setBasketDeliveryMethod($I, $basketId, self::SHIPPING_STANDARD);
         $this->setBasketPaymentMethod($I, $basketId, self::PAYMENT_STANDARD);
 
-        //now actually place the order
-        $variables = [
-            'basketId' => new ID($basketId)
-        ];
-        $mutation = '
-            mutation ($basketId: ID!) {
-                placeOrder(
-                    basketId: $basketId
-                    ) {
-                    id
-                }
-            }
-        ';
-        $result = $this->getGQLResponse($I, $mutation, $variables);
+        //place the order
+        $result  = $this->placeOrder($I, $basketId);
         $orderId = $result['data']['placeOrder']['id'];
 
+        //check order history
         $orders = $this->getOrderFromOrderHistory($I);
         $I->assertEquals($orders['id'], $orderId);
         $I->assertNotEmpty($orders['invoiceAddress']);
         $I->assertNull($orders['deliveryAddress']);
+
+        //remove basket
+        $this->removeBasket($I, $basketId, self::USERNAME);
+    }
+
+    public function placeOrderUsingDeliveryAddress(AcceptanceTester $I): void
+    {
+        $I->wantToTest('placing an order successfully with delivery address');
+        $I->login(self::USERNAME, self::PASSWORD);
+
+        //prepare basket
+        $basketId = $this->createBasket($I, 'my_cart_two');
+        $this->addProductToBasket($I, $basketId, self::PRODUCT_ID, 2);
+        $this->setBasketDeliveryAdress($I, $basketId);
+        $this->setBasketDeliveryMethod($I, $basketId, self::SHIPPING_STANDARD);
+        $this->setBasketPaymentMethod($I, $basketId, self::PAYMENT_STANDARD);
+
+        //place the order
+        $result  = $this->placeOrder($I, $basketId);
+        $orderId = $result['data']['placeOrder']['id'];
+
+        //check order history
+        $orders = $this->getOrderFromOrderHistory($I);
+        $I->assertEquals($orders['id'], $orderId);
+        $I->assertNotEmpty($orders['invoiceAddress']);
+        $I->assertNotEmpty($orders['deliveryAddress']);
+    }
+
+    public function placeOrderWithoutToken(AcceptanceTester $I): void
+    {
+        $I->wantToTest('placing an order when logged out');
+        $I->login(self::USERNAME, self::PASSWORD);
+
+        //prepare basket
+        $basketId = $this->createBasket($I, 'my_cart_three');
+        $this->addProductToBasket($I, $basketId, self::PRODUCT_ID, 2);
+        $this->setBasketDeliveryMethod($I, $basketId, self::SHIPPING_STANDARD);
+        $this->setBasketPaymentMethod($I, $basketId, self::PAYMENT_STANDARD);
+
+        //log out
+        $I->logout();
+
+        //place the order
+        $this->placeOrder($I, $basketId, HttpCode::BAD_REQUEST);
+
+        //remove basket
+        $this->removeBasket($I, $basketId, self::USERNAME);
+    }
+
+    public function placeOtherUsersOrder(AcceptanceTester $I): void
+    {
+        $I->wantToTest('placing another users order');
+        $I->login(self::USERNAME, self::PASSWORD);
+
+        //prepare basket
+        $basketId = $this->createBasket($I, 'my_cart_four');
+        $this->addProductToBasket($I, $basketId, self::PRODUCT_ID, 2);
+        $this->setBasketDeliveryMethod($I, $basketId, self::SHIPPING_STANDARD);
+        $this->setBasketPaymentMethod($I, $basketId, self::PAYMENT_STANDARD);
+
+        //log out
+        $I->logout();
+
+        //log in different user and place the order
+        $I->login(self::OTHER_USERNAME, self::PASSWORD);
+        $this->placeOrder($I, $basketId, HttpCode::UNAUTHORIZED);
+
+        //remove basket
+        $this->removeBasket($I, $basketId, self::USERNAME);
+    }
+
+    public function placeOrderWithEmptyBasket(AcceptanceTester $I): void
+    {
+        $I->wantToTest('that placing an order with empty basket fails');
+        $I->login(self::USERNAME, self::PASSWORD);
+
+        //prepare basket
+        $basketId = $this->createBasket($I, self::EMPTY_BASKET_NAME);
+        $this->setBasketDeliveryMethod($I, $basketId, self::SHIPPING_STANDARD);
+        $this->setBasketPaymentMethod($I, $basketId, self::PAYMENT_STANDARD);
+
+        //place the order
+        $result = $this->placeOrder($I, $basketId, HttpCode::BAD_REQUEST);
+
+        //remove basket
+        $this->removeBasket($I, $basketId, self::USERNAME);
     }
 
     private function getGQLResponse(
@@ -72,8 +154,7 @@ final class PlaceOrderCest extends BaseCest
         string $query,
         array $variables = [],
         int $status = HttpCode::OK
-    ): array
-    {
+    ): array {
         $I->sendGQLQuery($query, $variables);
         $I->seeResponseCodeIs($status);
         $I->seeResponseIsJson();
@@ -84,7 +165,7 @@ final class PlaceOrderCest extends BaseCest
     private function createBasket(AcceptanceTester $I, string $basketTitle): string
     {
         $variables = [
-            'title' => $basketTitle
+            'title' => $basketTitle,
         ];
 
         $query = '
@@ -104,7 +185,7 @@ final class PlaceOrderCest extends BaseCest
         $variables = [
             'basketId'  => $basketId,
             'productId' => $productId,
-            'amount'    => $amount
+            'amount'    => $amount,
         ];
 
         $mutation = '
@@ -133,7 +214,7 @@ final class PlaceOrderCest extends BaseCest
     private function queryBasketDeliveryMethods(AcceptanceTester $I, string $basketId): array
     {
         $variables = [
-            'basketId'  => new ID($basketId)
+            'basketId'  => new ID($basketId),
         ];
 
         $query = '
@@ -152,7 +233,7 @@ final class PlaceOrderCest extends BaseCest
     private function queryBasketPaymentMethods(AcceptanceTester $I, string $basketId): array
     {
         $variables = [
-            'basketId'  => new ID($basketId)
+            'basketId'  => new ID($basketId),
         ];
 
         $query = '
@@ -172,7 +253,7 @@ final class PlaceOrderCest extends BaseCest
     {
         $variables = [
             'basketId'   => new ID($basketId),
-            'deliveryId' => new ID($deliverySetId)
+            'deliveryId' => new ID($deliverySetId),
         ];
 
         $mutation = '
@@ -196,7 +277,7 @@ final class PlaceOrderCest extends BaseCest
     {
         $variables = [
             'basketId'  => new ID($basketId),
-            'paymentId' => new ID($paymentId)
+            'paymentId' => new ID($paymentId),
         ];
 
         $mutation = '
@@ -252,5 +333,86 @@ final class PlaceOrderCest extends BaseCest
         $result = $this->getGQLResponse($I, $mutation);
 
         return $result['data']['customer']['orders'][0];
+    }
+
+    private function placeOrder(AcceptanceTester $I, string $basketId, int $status = HttpCode::OK): array
+    {
+        //now actually place the order
+        $variables = [
+            'basketId' => new ID($basketId),
+        ];
+        $mutation = '
+            mutation ($basketId: ID!) {
+                placeOrder(
+                    basketId: $basketId
+                    ) {
+                    id
+                }
+            }
+        ';
+
+        return $this->getGQLResponse($I, $mutation, $variables, $status);
+    }
+
+    private function removeBasket(AcceptanceTester $I, string $basketId, string $username): void
+    {
+        $I->login($username, self::PASSWORD);
+
+        $variables = [
+            'basketId' => new ID($basketId),
+        ];
+
+        $I->sendGQLQuery(
+            'mutation ($basketId: String!) {
+                basketRemove(id: $basketId)
+            }',
+            $variables
+        );
+    }
+
+    private function createDeliveryAddress(AcceptanceTester $I): string
+    {
+        $mutation = 'mutation {
+                customerDeliveryAddressAdd(deliveryAddress: {
+                    salutation: "MRS",
+                    firstName: "Marlene",
+                    lastName: "Musterlich",
+                    additionalInfo: "private delivery",
+                    street: "Bertoldstrasse",
+                    streetNumber: "48",
+                    zipCode: "79098",
+                    city: "Freiburg",
+                    countryId: "8f241f11096877ac0.98748826"}
+                    ){
+                       id
+                    }
+                ';
+
+        $result = $this->getGQLResponse($I, $mutation);
+
+        return $result['data']['customerDeliveryAddressAdd']['id'];
+    }
+
+    private function setBasketDeliveryAdress(AcceptanceTester $I, string $basketId): void
+    {
+        $deliveryAddressId = $this->createDeliveryAddress($I);
+
+        $variables = [
+            'basketId'  => new ID($basketId),
+            'addressId' => new ID($deliveryAddressId),
+        ];
+
+        $mutation = '
+            mutation ($basketId: ID!, $addressId: ID!) {
+                basketSetDeliveryAddress(basketId: $basketId, deliveryAddressId: $deliveryAddressId) {
+                    deliveryAddress {
+                        id
+                    }
+                }
+            }';
+
+        $result = $this->getGQLResponse($I, $mutation, $variables);
+
+        $I->assertSame($deliveryAddressId, $result['data']['deliveryAddress']['id']);
     }
 }

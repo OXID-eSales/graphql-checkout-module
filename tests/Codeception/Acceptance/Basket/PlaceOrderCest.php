@@ -9,8 +9,8 @@ declare(strict_types=1);
 
 namespace OxidEsales\GraphQL\Checkout\Tests\Codeception\Acceptance\Basket;
 
-use Codeception\Util\HttpCode;
 use Codeception\Scenario;
+use Codeception\Util\HttpCode;
 use OxidEsales\GraphQL\Checkout\Tests\Codeception\Acceptance\BaseCest;
 use OxidEsales\GraphQL\Checkout\Tests\Codeception\AcceptanceTester;
 use TheCodingMachine\GraphQLite\Types\ID;

@@ -10,7 +10,11 @@ declare(strict_types=1);
 namespace OxidEsales\GraphQL\Checkout\Basket\Controller;
 
 use OxidEsales\GraphQL\Account\Basket\DataType\Basket as BasketDataType;
+use OxidEsales\GraphQL\Account\Customer\DataType\Customer as CustomerDataType;
+use OxidEsales\GraphQL\Account\Customer\Service\Customer as CustomerService;
+use OxidEsales\GraphQL\Account\Order\DataType\Order as OrderDataType;
 use OxidEsales\GraphQL\Account\Payment\DataType\Payment as PaymentDataType;
+use OxidEsales\GraphQL\Base\Service\Authentication;
 use OxidEsales\GraphQL\Checkout\Basket\Service\Basket as BasketService;
 use OxidEsales\GraphQL\Checkout\DeliveryMethod\DataType\DeliveryMethod as DeliveryMethodDataType;
 use TheCodingMachine\GraphQLite\Annotations\Logged;
@@ -23,10 +27,20 @@ final class Basket
     /** @var BasketService */
     private $basketService;
 
+    /** @var CustomerService */
+    private $customerService;
+
+    /** @var Authentication */
+    private $authenticationService;
+
     public function __construct(
-        BasketService $basketService
+        BasketService $basketService,
+        CustomerService $customerService,
+        Authentication $authenticationService
     ) {
-        $this->basketService = $basketService;
+        $this->basketService         = $basketService;
+        $this->customerService       = $customerService;
+        $this->authenticationService = $authenticationService;
     }
 
     /**
@@ -78,5 +92,26 @@ final class Basket
     public function basketPayments(ID $basketId): array
     {
         return $this->basketService->getBasketPayments($basketId);
+    }
+
+    /**
+     * @Mutation()
+     * @Logged()
+     *
+     * @return int
+     */
+    public function placeOrder(ID $basketId): OrderDataType
+    {
+        /** @var CustomerDataType $customer */
+        $customer = $this->customerService->customer(
+            $this->authenticationService->getUserId()
+        );
+
+        $userBasket = $this->basketService->getBasketById($basketId);
+
+        return $this->basketService->placeOrder(
+            $customer,
+            $userBasket
+        );
     }
 }

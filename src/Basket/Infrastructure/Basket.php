@@ -159,15 +159,19 @@ final class Basket
         /** @var EshopUserBasketModel $userBasketModel */
         $userBasketModel = $userBasket->getEshopModel();
 
+        //set delivery address to basket if any is given
+        if(!empty($userBasketModel->getFieldData('oegql_deladdressid'))) {
+            $userModel->setSelectedAddressId($userBasketModel->getFieldData('oegql_deladdressid'));
+        }
+        $_POST['sDeliveryAddressMD5'] = $userModel->getEncodedDeliveryAddress();
+
         /** @var EshopBasketModel $basketModel */
         $basketModel = $this->accountBasketInfrastructure->getBasket($userBasketModel, $userModel);
+        $basketModel->setPayment($userBasketModel->getFieldData('oegql_paymentid'));
+        $basketModel->setShipping($userBasketModel->getFieldData('oegql_shippingid'));
 
         /** @var OrderModel $orderModel */
         $orderModel = oxNew(OrderModel::class);
-
-        //TODO:
-        $_POST['sDeliveryAddressMD5'] = $userModel->getEncodedDeliveryAddress();
-
         $state = $orderModel->finalizeOrder($basketModel, $userModel);
 
         //we need to delete the basket after order to prevent ordering it twice

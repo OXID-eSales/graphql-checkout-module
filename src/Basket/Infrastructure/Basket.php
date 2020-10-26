@@ -9,13 +9,17 @@ declare(strict_types=1);
 
 namespace OxidEsales\GraphQL\Checkout\Basket\Infrastructure;
 
+use OxidEsales\Eshop\Application\Model\Basket as EshopBasketModel;
+use OxidEsales\Eshop\Application\Model\UserBasket as EshopUserBasketModel;
 use OxidEsales\Eshop\Application\Model\DeliverySet as EshopDeliverySetModel;
 use OxidEsales\Eshop\Application\Model\DeliverySetList as EshopDeliverySetListModel;
+use OxidEsales\Eshop\Application\Model\Order as OrderModel;
 use OxidEsales\Eshop\Application\Model\User as EshopUserModel;
 use OxidEsales\GraphQL\Account\Address\Service\DeliveryAddress as DeliveryAddressService;
 use OxidEsales\GraphQL\Account\Basket\DataType\Basket as BasketDataType;
 use OxidEsales\GraphQL\Account\Country\DataType\Country as CountryDataType;
 use OxidEsales\GraphQL\Account\Customer\DataType\Customer as CustomerDataType;
+use OxidEsales\GraphQL\Account\Order\DataType\Order as OrderDataType;
 use OxidEsales\GraphQL\Account\Payment\DataType\Payment as PaymentDataType;
 use OxidEsales\GraphQL\Account\Shared\Infrastructure\Basket as AccountBasketInfrastructure;
 use OxidEsales\GraphQL\Catalogue\Shared\Infrastructure\Repository;
@@ -142,5 +146,36 @@ final class Basket
         }
 
         return $countryId;
+    }
+
+    public function placeOrder(
+        CustomerDataType $customer,
+        BasketDataType $userBasket
+    ): OrderDataType {
+
+        /** @var EshopUserModel $user */
+        $userModel = $customer->getEshopModel();
+
+        /** @var EshopUserBasketModel $userBasketModel */
+        $userBasketModel = $userBasket->getEshopModel();
+
+        /** @var EshopBasketModel $basketModel */
+        $basketModel = $this->accountBasketInfrastructure->getBasket($userBasketModel, $userModel);
+
+        /** @var OrderModel $orderModel */
+        $orderModel = oxNew(OrderModel::class);
+
+        //TODO:
+        $_POST['sDeliveryAddressMD5'] = $userModel->getEncodedDeliveryAddress();
+
+        $state = $orderModel->finalizeOrder($basketModel, $userModel);
+
+        //we need to delete the basket after order to prevent ordering it twice
+        if ($state === $orderModel::ORDER_STATE_OK || $state === $orderModel::ORDER_STATE_MAILINGERROR) {
+            $basketModel->deleteBasket();
+        }
+
+        //return order data type
+        return new OrderDataType($orderModel);
     }
 }

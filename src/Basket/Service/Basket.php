@@ -18,7 +18,9 @@ use OxidEsales\GraphQL\Account\Basket\Exception\BasketAccessForbidden;
 use OxidEsales\GraphQL\Account\Basket\Exception\BasketNotFound;
 use OxidEsales\GraphQL\Account\Basket\Service\Basket as AccountBasketService;
 use OxidEsales\GraphQL\Account\Country\Service\Country as CountryService;
+use OxidEsales\GraphQL\Account\Customer\DataType\Customer as CustomerDataType;
 use OxidEsales\GraphQL\Account\Customer\Service\Customer as CustomerService;
+use OxidEsales\GraphQL\Account\Order\DataType\Order as OrderDataType;
 use OxidEsales\GraphQL\Account\Payment\DataType\Payment as PaymentDataType;
 use OxidEsales\GraphQL\Base\Exception\InvalidToken;
 use OxidEsales\GraphQL\Base\Service\Authentication;
@@ -236,6 +238,32 @@ final class Basket
         return array_unique($result, SORT_REGULAR);
     }
 
+    /**
+     * @throws BasketAccessForbidden
+     * @throws BasketNotFound
+     * @throws InvalidToken
+     */
+    public function getBasketById(ID $basketId): BasketDataType
+    {
+        $basket = $this->accountBasketService->basket((string) $basketId->val());
+
+        $userId = $this->authenticationService->getUserId();
+
+        if (!$basket->belongsToUser($userId)) {
+            throw BasketAccessForbidden::byAuthenticatedUser();
+        }
+
+        return $basket;
+    }
+
+    public function placeOrder(CustomerDataType $customer, BasketDataType $userBasket): OrderDataType
+    {
+        return $this->basketInfrastructure->placeOrder(
+            $customer,
+            $userBasket
+        );
+    }
+
     private function deliveryAddressBelongsToUser(string $deliveryAddressId): bool
     {
         $belongs           = false;
@@ -252,23 +280,5 @@ final class Basket
         }
 
         return $belongs;
-    }
-
-    /**
-     * @throws BasketAccessForbidden
-     * @throws BasketNotFound
-     * @throws InvalidToken
-     */
-    private function getBasketById(ID $basketId): BasketDataType
-    {
-        $basket = $this->accountBasketService->basket((string) $basketId->val());
-
-        $userId = $this->authenticationService->getUserId();
-
-        if (!$basket->belongsToUser($userId)) {
-            throw BasketAccessForbidden::byAuthenticatedUser();
-        }
-
-        return $basket;
     }
 }

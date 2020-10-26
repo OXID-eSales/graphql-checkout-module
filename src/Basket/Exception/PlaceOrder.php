@@ -35,4 +35,9 @@ final class PlaceOrder extends Exception implements ClientAware, HttpErrorInterf
     {
         return new self(vsprintf('Place order for user basket id: %s has status %i', [$id, $status]));
     }
+
+    public static function emptyBasket(string $id): self
+    {
+        return new self(sprintf('Order cannot be placed. Basket with id: %s is empty', $id));
+    }
 }

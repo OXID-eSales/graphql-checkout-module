@@ -161,12 +161,17 @@ final class Basket
         /** @var EshopUserBasketModel $userBasketModel */
         $userBasketModel = $userBasket->getEshopModel();
 
+        if($userBasketModel->getItemCount() === 0) {
+            throw PlaceOrderException::emptyBasket((string)$userBasket->id());
+        }
+
         $_POST['sDeliveryAddressMD5'] = $userModel->getEncodedDeliveryAddress();
 
         //set delivery address to basket if any is given
         if (!empty($userBasketModel->getFieldData('oegql_deladdressid'))) {
             $userModel->setSelectedAddressId($userBasketModel->getFieldData('oegql_deladdressid'));
             $_POST['deladrid'] = $userModel->getSelectedAddressId();
+            /** @var EshopAddressModel $deliveryAdress */
             $deliveryAdress    = oxNew(EshopAddressModel::class);
             $deliveryAdress->load($userModel->getSelectedAddressId());
             $_POST['sDeliveryAddressMD5'] .= $deliveryAdress->getEncodedDeliveryAddress();

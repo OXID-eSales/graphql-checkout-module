@@ -161,8 +161,8 @@ final class Basket
         /** @var EshopUserBasketModel $userBasketModel */
         $userBasketModel = $userBasket->getEshopModel();
 
-        if($userBasketModel->getItemCount() === 0) {
-            throw PlaceOrderException::emptyBasket((string)$userBasket->id());
+        if ($userBasketModel->getItemCount() === 0) {
+            throw PlaceOrderException::emptyBasket((string) $userBasket->id());
         }
 
         $_POST['sDeliveryAddressMD5'] = $userModel->getEncodedDeliveryAddress();

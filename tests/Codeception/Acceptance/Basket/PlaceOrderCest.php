@@ -191,7 +191,7 @@ final class PlaceOrderCest extends BaseCest
         $this->removeBasket($I, $basketId, self::USERNAME);
     }
 
-    public function prepareOrderWithNoShippingMethodForCountry(AcceptanceTester $I)
+    public function prepareOrderWithNoShippingMethodForCountry(AcceptanceTester $I): void
     {
         $I->wantToTest('that using delivery address with unsupported country fails');
         $I->login(self::USERNAME, self::PASSWORD);
@@ -208,15 +208,12 @@ final class PlaceOrderCest extends BaseCest
         $this->removeBasket($I, $basketId, self::USERNAME);
     }
 
-    /**
-     * @group WIP
-     */
-   public function placeOrderWithChangedDeliveryAddress(AcceptanceTester $I)
+    public function placeOrderWithChangedDeliveryAddress(AcceptanceTester $I): void
     {
         $I->wantToTest('that placing an order with changed delivery address fails');
         $I->login(self::USERNAME, self::PASSWORD);
 
-        //prepare basket with invoice address
+        //prepare basket with german delivery address
         $basketId = $this->createBasket($I, 'my_cart_six');
         $this->addProductToBasket($I, $basketId, self::PRODUCT_ID, 3);
         $this->setBasketDeliveryAddress($I, $basketId); //Germany
@@ -233,37 +230,60 @@ final class PlaceOrderCest extends BaseCest
         $this->removeBasket($I, $basketId, self::USERNAME);
     }
 
-    public function placeOrderWithVouchers()
+    public function placeOrderWithUnavailablePayment(AcceptanceTester $I): void
+    {
+        $I->wantToTest('that placing an order with unavailable payment fails');
+        $I->login(self::USERNAME, self::PASSWORD);
+
+        $I->wantToTest('that placing an order with changed delivery address fails');
+        $I->login(self::USERNAME, self::PASSWORD);
+
+        //prepare basket with invoice address
+        $basketId = $this->createBasket($I, 'my_cart_seven');
+        $this->addProductToBasket($I, $basketId, self::PRODUCT_ID, 3);
+        $this->setBasketDeliveryMethod($I, $basketId, self::SHIPPING_STANDARD);
+        $this->setBasketPaymentMethod($I, $basketId, self::PAYMENT_STANDARD);
+
+        $I->updateInDatabase('oxuserbaskets', ['oegql_paymentid' => self::PAYMENT_TEST], ['oxid' => $basketId]);
+
+        //place the order
+        $result = $this->placeOrder($I, $basketId, HttpCode::BAD_REQUEST);
+
+        //remove basket
+        $this->removeBasket($I, $basketId, self::USERNAME);
+    }
+
+    public function placeOrderWithVouchers(): void
     {
         //TODO
     }
 
-    public function placeOrderWithDiscounts()
+    public function placeOrderWithDiscounts(): void
     {
         //TODO
     }
 
-    public function placeOrderAndNoCalculateDelCostIfNotLoggedIn()
+    public function placeOrderAndNoCalculateDelCostIfNotLoggedIn(): void
     {
         //TODO: blCalculateDelCostIfNotLoggedIn
     }
 
-    public function placeOrderWithBasketReservation()
+    public function placeOrderWithBasketReservation(): void
     {
         //TODO: blPsBasketReservationEnabled
     }
 
-    public function placeOrderWithConfirmAGB()
+    public function placeOrderWithConfirmAGB(): void
     {
         //TODO: blConfirmAGB
     }
 
-    public function placeOrderWithDownloadableProduct()
+    public function placeOrderWithDownloadableProduct(): void
     {
         //TODO:
     }
 
-    public function placeOrderWithBelowMinPriceBasket()
+    public function placeOrderWithBelowMinPriceBasket(): void
     {
         //TODO:
     }
@@ -394,8 +414,7 @@ final class PlaceOrderCest extends BaseCest
         string $basketId,
         string $deliverySetId,
         int $status = HttpCode::OK
-    ): string
-    {
+    ): string {
         $variables = [
             'basketId'   => new ID($basketId),
             'deliveryId' => new ID($deliverySetId),
@@ -519,10 +538,10 @@ final class PlaceOrderCest extends BaseCest
         );
     }
 
-    private function createDeliveryAddress(AcceptanceTester $I, string $countryId = "a7c40f631fc920687.20179984"): string
+    private function createDeliveryAddress(AcceptanceTester $I, string $countryId = 'a7c40f631fc920687.20179984'): string
     {
         $variables = [
-            'countryId' => new ID($countryId)
+            'countryId' => new ID($countryId),
         ];
 
         $mutation = 'mutation ($countryId: ID!) {
@@ -550,9 +569,8 @@ final class PlaceOrderCest extends BaseCest
     private function setBasketDeliveryAddress(
         AcceptanceTester $I,
         string $basketId,
-        string $countryId = "a7c40f631fc920687.20179984"
-    ): void
-    {
+        string $countryId = 'a7c40f631fc920687.20179984'
+    ): void {
         $deliveryAddressId = $this->createDeliveryAddress($I, $countryId);
 
         $variables = [

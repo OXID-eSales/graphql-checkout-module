@@ -270,7 +270,9 @@ final class Basket
     public function placeOrder(CustomerDataType $customer, BasketDataType $userBasket): OrderDataType
     {
         $userBasket->id();
+        /** @var DeliveryMethodDataType $deliveryMethod */
         $deliveryMethod = $this->basketRelationService->deliveryMethod($userBasket);
+        /** @var PaymentDataType $payment */
         $payment        = $this->basketRelationService->payment($userBasket);
 
         if (!$this->isDeliveryMethodAvailableForBasket($userBasket->id(), $deliveryMethod->id())) {

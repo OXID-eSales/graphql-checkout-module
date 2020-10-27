@@ -97,8 +97,6 @@ final class Basket
     /**
      * @Mutation()
      * @Logged()
-     *
-     * @return int
      */
     public function placeOrder(ID $basketId): OrderDataType
     {

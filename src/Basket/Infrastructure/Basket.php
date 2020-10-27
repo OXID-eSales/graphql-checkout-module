@@ -155,7 +155,7 @@ final class Basket
         BasketDataType $userBasket
     ): OrderDataType {
 
-        /** @var EshopUserModel $user */
+        /** @var EshopUserModel $userModel */
         $userModel = $customer->getEshopModel();
 
         /** @var EshopUserBasketModel $userBasketModel */

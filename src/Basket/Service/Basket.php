@@ -26,6 +26,7 @@ use OxidEsales\GraphQL\Base\Exception\InvalidToken;
 use OxidEsales\GraphQL\Base\Service\Authentication;
 use OxidEsales\GraphQL\Base\Service\Authorization;
 use OxidEsales\GraphQL\Catalogue\Shared\Infrastructure\Repository as Repository;
+use OxidEsales\GraphQL\Checkout\Basket\Exception\PlaceOrder;
 use OxidEsales\GraphQL\Checkout\Basket\Infrastructure\Basket as BasketInfrastructure;
 use OxidEsales\GraphQL\Checkout\DeliveryMethod\DataType\DeliveryMethod as DeliveryMethodDataType;
 use OxidEsales\GraphQL\Checkout\DeliveryMethod\Exception\UnavailableDeliveryMethod;
@@ -59,6 +60,9 @@ final class Basket
     /** @var DeliveryAddressService */
     private $deliveryAddressService;
 
+    /** @var BasketRelationService */
+    private $basketRelationService;
+
     public function __construct(
         Repository $repository,
         Authentication $authenticationService,
@@ -67,7 +71,8 @@ final class Basket
         DeliveryAddressService $deliveryAddressService,
         AccountBasketService $accountBasketService,
         CountryService $countryService,
-        CustomerService $customerService
+        CustomerService $customerService,
+        BasketRelationService $basketRelationService
     ) {
         $this->repository             = $repository;
         $this->authenticationService  = $authenticationService;
@@ -77,6 +82,7 @@ final class Basket
         $this->countryService         = $countryService;
         $this->customerService        = $customerService;
         $this->deliveryAddressService = $deliveryAddressService;
+        $this->basketRelationService  = $basketRelationService;
     }
 
     /**
@@ -256,8 +262,25 @@ final class Basket
         return $basket;
     }
 
+    /**
+     * @throws UnavailableDeliveryMethod
+     * @throws UnavailablePayment
+     * @throws PlaceOrder
+     */
     public function placeOrder(CustomerDataType $customer, BasketDataType $userBasket): OrderDataType
     {
+        $userBasket->id();
+        $deliveryMethod = $this->basketRelationService->deliveryMethod($userBasket);
+        $payment        = $this->basketRelationService->payment($userBasket);
+
+        if (!$this->isDeliveryMethodAvailableForBasket($userBasket->id(), $deliveryMethod->id())) {
+            throw UnavailableDeliveryMethod::byId((string) $deliveryMethod->id()->val());
+        }
+
+        if (!$this->isPaymentMethodAvailableForBasket($userBasket->id(), $payment->getId())) {
+            throw UnavailablePayment::byId((string) $payment->getId()->val());
+        }
+
         return $this->basketInfrastructure->placeOrder(
             $customer,
             $userBasket

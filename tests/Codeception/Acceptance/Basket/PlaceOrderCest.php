@@ -626,7 +626,7 @@ final class PlaceOrderCest extends BaseCest
     {
         $variables = [
             'basketId' => $basketId,
-            'voucher' => $voucher,
+            'voucher'  => $voucher,
         ];
 
         $mutation = '
@@ -648,12 +648,12 @@ final class PlaceOrderCest extends BaseCest
         $I->haveInDatabase(
             'oxvoucherseries',
             [
-                'OXID' => 'voucherserie1',
-                'OXSERIENR' => 'voucherserie1',
-                'OXDISCOUNT' => 5,
-                'OXDISCOUNTTYPE' => 'absolute',
-                'OXBEGINDATE' => '2000-01-01',
-                'OXENDDATE' => '2050-12-31',
+                'OXID'               => 'voucherserie1',
+                'OXSERIENR'          => 'voucherserie1',
+                'OXDISCOUNT'         => 5,
+                'OXDISCOUNTTYPE'     => 'absolute',
+                'OXBEGINDATE'        => '2000-01-01',
+                'OXENDDATE'          => '2050-12-31',
                 'OXSERIEDESCRIPTION' => '',
                 'OXALLOWOTHERSERIES' => 1,
             ]
@@ -661,16 +661,16 @@ final class PlaceOrderCest extends BaseCest
         $I->haveInDatabase(
             'oxvouchers',
             [
-                'OXDATEUSED' => null,
-                'OXORDERID' => '',
-                'OXUSERID' => '',
-                'OXRESERVED' => 0,
-                'OXVOUCHERNR' => 'voucher1',
+                'OXDATEUSED'       => null,
+                'OXORDERID'        => '',
+                'OXUSERID'         => '',
+                'OXRESERVED'       => 0,
+                'OXVOUCHERNR'      => 'voucher1',
                 'OXVOUCHERSERIEID' => 'voucherserie1',
-                'OXID' => 'voucher1id',
-                'OXDISCOUNT' => 5,
-                'OXTIMESTAMP' => date("Y-m-d"),
-                'OEGQL_BASKETID' => 'null',
+                'OXID'             => 'voucher1id',
+                'OXDISCOUNT'       => 5,
+                'OXTIMESTAMP'      => date('Y-m-d'),
+                'OEGQL_BASKETID'   => 'null',
             ]
         );
     }

@@ -229,6 +229,27 @@ final class PlaceOrderCest extends BaseCest
         //TODO:
     }
 
+    public function placeOrderOnOutOfStockNotBuyableProduct(AcceptanceTester $I): void
+    {
+        $I->wantToTest('placing an order on a product which is out of stock or not buyable');
+        $I->login(self::USERNAME, self::PASSWORD);
+
+        //prepare basket
+        $basketId = $this->createBasket($I, 'cart_with_not_buyable_product');
+        $this->addProductToBasket($I, $basketId, self::PRODUCT_ID, 5);
+        $this->setBasketDeliveryMethod($I, $basketId, self::SHIPPING_STANDARD);
+        $this->setBasketPaymentMethod($I, $basketId, self::PAYMENT_STANDARD);
+
+        // making product out of stock now
+        $I->updateInDatabase('oxarticles', ['oxstock' => '3', 'oxstockflag' => '3'], ['oxid' => self::PRODUCT_ID]);
+
+        //place the order
+        $this->placeOrder($I, $basketId, HttpCode::BAD_REQUEST);
+
+        //remove basket
+        $this->removeBasket($I, $basketId, self::USERNAME);
+    }
+
     private function getGQLResponse(
         AcceptanceTester $I,
         string $query,

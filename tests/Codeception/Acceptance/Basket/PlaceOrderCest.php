@@ -194,9 +194,39 @@ final class PlaceOrderCest extends BaseCest
         //TODO
     }
 
-    public function placeOrderWithVouchers()
+    public function placeOrderWithVouchers(AcceptanceTester $I)
     {
-        //TODO
+        $I->wantToTest('placing an order with vouchers');
+        $I->login(self::USERNAME, self::PASSWORD);
+
+        // add voucherSeries and voucher to database
+        $this->createVoucher($I);
+
+        //prepare basket
+        $basketId = $this->createBasket($I, 'cart_with_voucher');
+        $this->addProductToBasket($I, $basketId, self::PRODUCT_ID, 1);
+        $this->setBasketDeliveryMethod($I, $basketId, self::SHIPPING_STANDARD);
+        $this->setBasketPaymentMethod($I, $basketId, self::PAYMENT_STANDARD);
+        $this->addVoucherToBasket($I, $basketId, 'voucher1');
+
+        //place the order
+        $result  = $this->placeOrder($I, $basketId);
+        $orderId = $result['data']['placeOrder']['id'];
+
+        //check order history
+        $orders = $this->getOrderFromOrderHistory($I);
+        $I->assertEquals($orders['id'], $orderId);
+        $I->assertEquals($orders['vouchers'][0]['id'], 'voucher1id');
+        $I->assertNotEmpty($orders['invoiceAddress']);
+        $I->assertNull($orders['deliveryAddress']);
+        $I->assertNull($orders['deliveryAddress']);
+
+        //OXVOUCHERDISCOUNT ?
+
+        //todo check if discount was applied ?
+
+        //remove basket
+        $this->removeBasket($I, $basketId, self::USERNAME);
     }
 
     public function placeOrderWithDiscounts()
@@ -517,5 +547,58 @@ final class PlaceOrderCest extends BaseCest
         $result = $this->getGQLResponse($I, $mutation, $variables);
 
         $I->assertSame($deliveryAddressId, $result['data']['basketSetDeliveryAddress']['deliveryAddress']['id']);
+    }
+
+    private function addVoucherToBasket(AcceptanceTester $I, string $basketId, string $voucher): void
+    {
+        $variables = [
+            'basketId' => $basketId,
+            'voucher' => $voucher,
+        ];
+
+        $mutation = '
+            mutation ($basketId: String!, $voucher: String!){
+                basketAddVoucher(basketId: $basketId, voucher: $voucher){
+                    vouchers {
+                        number
+                    }
+                }
+            }
+        ';
+        $result = $this->getGQLResponse($I, $mutation, $variables);
+
+        $I->assertSame($voucher, $result['data']['basketAddVoucher']['vouchers'][0]['number']);
+    }
+
+    private function createVoucher(AcceptanceTester $I): void
+    {
+        $I->haveInDatabase(
+            'oxvoucherseries',
+            [
+                'OXID' => 'voucherserie1',
+                'OXSERIENR' => 'voucherserie1',
+                'OXDISCOUNT' => 5,
+                'OXDISCOUNTTYPE' => 'absolute',
+                'OXBEGINDATE' => '2000-01-01',
+                'OXENDDATE' => '2050-12-31',
+                'OXSERIEDESCRIPTION' => '',
+                'OXALLOWOTHERSERIES' => 1,
+            ]
+        );
+        $I->haveInDatabase(
+            'oxvouchers',
+            [
+                'OXDATEUSED' => null,
+                'OXORDERID' => '',
+                'OXUSERID' => '',
+                'OXRESERVED' => 0,
+                'OXVOUCHERNR' => 'voucher1',
+                'OXVOUCHERSERIEID' => 'voucherserie1',
+                'OXID' => 'voucher1id',
+                'OXDISCOUNT' => 5,
+                'OXTIMESTAMP' => date("Y-m-d"),
+                'OEGQL_BASKETID' => 'null',
+            ]
+        );
     }
 }

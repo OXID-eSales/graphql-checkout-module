@@ -189,6 +189,46 @@ final class PlaceOrderCest extends BaseCest
         $this->removeBasket($I, $basketId, self::USERNAME);
     }
 
+    public function placeOrderWithChangedDeliveryAddress()
+    {
+        //TODO
+    }
+
+    public function placeOrderWithVouchers()
+    {
+        //TODO
+    }
+
+    public function placeOrderWithDiscounts()
+    {
+        //TODO
+    }
+
+    public function placeOrderAndNoCalculateDelCostIfNotLoggedIn()
+    {
+        //TODO: blCalculateDelCostIfNotLoggedIn
+    }
+
+    public function placeOrderWithBasketReservation()
+    {
+        //TODO: blPsBasketReservationEnabled
+    }
+
+    public function placeOrderWithConfirmAGB()
+    {
+        //TODO: blConfirmAGB
+    }
+
+    public function placeOrderWithDownloadableProduct()
+    {
+        //TODO:
+    }
+
+    public function placeOrderWithBelowMinPriceBasket()
+    {
+        //TODO:
+    }
+
     private function getGQLResponse(
         AcceptanceTester $I,
         string $query,

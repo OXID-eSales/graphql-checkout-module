@@ -51,6 +51,7 @@ final class PlaceOrderCest extends BaseCest
         parent::_before($I, $scenario);
 
         $I->updateConfigInDatabase('blPerfNoBasketSaving', false, 'bool');
+        $I->updateConfigInDatabase('blCalculateDelCostIfNotLoggedIn', false, 'bool');
     }
 
     public function placeOrderUsingInvoiceAddress(AcceptanceTester $I): void
@@ -71,6 +72,7 @@ final class PlaceOrderCest extends BaseCest
         //check order history
         $orders = $this->getOrderFromOrderHistory($I);
         $I->assertEquals($orders['id'], $orderId);
+        $I->assertEquals($orders['cost']['total'], 63.7);
         $I->assertNotEmpty($orders['invoiceAddress']);
         $I->assertNull($orders['deliveryAddress']);
 
@@ -98,6 +100,7 @@ final class PlaceOrderCest extends BaseCest
         //check order history
         $orders = $this->getOrderFromOrderHistory($I);
         $I->assertEquals($orders['id'], $orderId);
+        $I->assertEquals($orders['cost']['total'], 66.46);
         $I->assertNotEmpty($orders['invoiceAddress']);
         $I->assertNull($orders['deliveryAddress']);
 
@@ -235,9 +238,6 @@ final class PlaceOrderCest extends BaseCest
         $I->wantToTest('that placing an order with unavailable payment fails');
         $I->login(self::USERNAME, self::PASSWORD);
 
-        $I->wantToTest('that placing an order with changed delivery address fails');
-        $I->login(self::USERNAME, self::PASSWORD);
-
         //prepare basket with invoice address
         $basketId = $this->createBasket($I, 'my_cart_seven');
         $this->addProductToBasket($I, $basketId, self::PRODUCT_ID, 3);
@@ -288,9 +288,30 @@ final class PlaceOrderCest extends BaseCest
         //TODO
     }
 
-    public function placeOrderAndNoCalculateDelCostIfNotLoggedIn(): void
+    public function placeOrderAndNoCalculateDelCostIfNotLoggedIn(AcceptanceTester $I): void
     {
-        //TODO: blCalculateDelCostIfNotLoggedIn
+        $I->wantToTest('that blCalculateDelCostIfNotLoggedIn has no effect on placeOrder');
+        $I->updateConfigInDatabase('blCalculateDelCostIfNotLoggedIn', true, 'bool');
+
+        $I->login(self::USERNAME, self::PASSWORD);
+
+        //prepare basket with invoice address
+        $basketId = $this->createBasket($I, 'my_cart_del_cost_flag');
+        $this->addProductToBasket($I, $basketId, self::PRODUCT_ID, 2);
+        $this->setBasketDeliveryMethod($I, $basketId, self::SHIPPING_STANDARD);
+        $this->setBasketPaymentMethod($I, $basketId, self::PAYMENT_STANDARD);
+
+        //place the order
+        $result  = $this->placeOrder($I, $basketId);
+        $orderId = $result['data']['placeOrder']['id'];
+
+        //check order history
+        $orders = $this->getOrderFromOrderHistory($I);
+        $I->assertEquals($orders['id'], $orderId);
+        $I->assertEquals($orders['cost']['total'], 63.7);
+
+        //remove basket
+        $this->removeBasket($I, $basketId, self::USERNAME);
     }
 
     public function placeOrderWithBasketReservation(): void
@@ -501,6 +522,9 @@ final class PlaceOrderCest extends BaseCest
                         ordered
                         paid
                         updated
+                        cost {
+                            total
+                        }
                         vouchers {
                             id
                         }

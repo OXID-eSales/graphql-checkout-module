@@ -329,9 +329,25 @@ final class PlaceOrderCest extends BaseCest
         //TODO:
     }
 
-    public function placeOrderWithBelowMinPriceBasket(): void
+    public function placeOrderWithBelowMinPriceBasket(AcceptanceTester $I): void
     {
-        //TODO:
+        $I->wantToTest('placing an order when basket total is below minimum price');
+        $I->login(self::USERNAME, self::PASSWORD);
+
+        //prepare basket
+        $basketId = $this->createBasket($I, 'cart_below_min_price');
+        $this->addProductToBasket($I, $basketId, self::PRODUCT_ID, 1);
+        $this->setBasketDeliveryMethod($I, $basketId, self::SHIPPING_STANDARD);
+        $this->setBasketPaymentMethod($I, $basketId, self::PAYMENT_STANDARD);
+
+        // change minimum price to place an order
+        $I->updateConfigInDatabase('iMinOrderPrice', '100', 'str');
+
+        //place the order
+        $this->placeOrder($I, $basketId, HttpCode::BAD_REQUEST);
+
+        //remove basket
+        $this->removeBasket($I, $basketId, self::USERNAME);
     }
 
     public function placeOrderOnOutOfStockNotBuyableProduct(AcceptanceTester $I): void

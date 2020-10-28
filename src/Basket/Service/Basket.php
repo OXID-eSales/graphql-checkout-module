@@ -273,7 +273,7 @@ final class Basket
         /** @var DeliveryMethodDataType $deliveryMethod */
         $deliveryMethod = $this->basketRelationService->deliveryMethod($userBasket);
         /** @var PaymentDataType $payment */
-        $payment        = $this->basketRelationService->payment($userBasket);
+        $payment = $this->basketRelationService->payment($userBasket);
 
         if (!$this->isDeliveryMethodAvailableForBasket($userBasket->id(), $deliveryMethod->id())) {
             throw UnavailableDeliveryMethod::byId((string) $deliveryMethod->id()->val());

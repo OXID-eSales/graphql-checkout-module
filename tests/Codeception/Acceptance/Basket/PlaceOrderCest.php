@@ -46,6 +46,8 @@ final class PlaceOrderCest extends BaseCest
 
     private const ALTERNATE_COUNTRY = 'a7c40f632a0804ab5.18804076';
 
+    private const DOWNLOADABLE_FILE = 'oiaa81b5e002fc2f73b9398c361c0b97';
+
     public function _before(AcceptanceTester $I, Scenario $scenario): void
     {
         parent::_before($I, $scenario);
@@ -329,9 +331,28 @@ final class PlaceOrderCest extends BaseCest
         //TODO: blConfirmAGB
     }
 
-    public function placeOrderWithDownloadableProduct(): void
+    public function placeOrderWithDownloadableProduct(AcceptanceTester $I): void
     {
-        //TODO:
+        $I->wantToTest('placing an order on downloadable product');
+        $I->login(self::USERNAME, self::PASSWORD);
+
+        //prepare basket
+        $basketId = $this->createBasket($I, 'cart_with_files');
+        $this->addProductToBasket($I, $basketId, self::DOWNLOADABLE_FILE, 1);
+        $this->setBasketDeliveryMethod($I, $basketId, self::SHIPPING_STANDARD);
+        $this->setBasketPaymentMethod($I, $basketId, self::PAYMENT_STANDARD);
+
+        //place the order
+        $result  = $this->placeOrder($I, $basketId);
+        $orderId = $result['data']['placeOrder']['id'];
+
+        //check order history
+        $orders = $this->getOrderFromOrderHistory($I);
+        $I->assertEquals($orders['id'], $orderId);
+        $I->assertEquals($orders['cost']['total'], 0);
+
+        //remove basket
+        $this->removeBasket($I, $basketId, self::USERNAME);
     }
 
     public function placeOrderWithBelowMinPriceBasket(AcceptanceTester $I): void

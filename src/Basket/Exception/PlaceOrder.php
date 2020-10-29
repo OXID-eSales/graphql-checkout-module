@@ -40,4 +40,9 @@ final class PlaceOrder extends Exception implements ClientAware, HttpErrorInterf
     {
         return new self(sprintf('Order cannot be placed. Basket with id: %s is empty', $id));
     }
+
+    public static function timedOutBasket(string $id): self
+    {
+        return new self(sprintf('Order cannot be placed. Basket with id: %s is timed out', $id));
+    }
 }

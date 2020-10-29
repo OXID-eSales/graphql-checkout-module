@@ -16,6 +16,8 @@ use OxidEsales\GraphQL\Account\Basket\DataType\Basket;
 use OxidEsales\GraphQL\Account\Payment\DataType\Payment;
 use OxidEsales\GraphQL\Account\Payment\Exception\PaymentNotFound;
 use OxidEsales\GraphQL\Account\Payment\Service\Payment as PaymentService;
+use OxidEsales\GraphQL\Base\Service\Legacy as LegacyService;
+use OxidEsales\GraphQL\Checkout\Basket\Infrastructure\Basket as BasketInfrastructure;
 use OxidEsales\GraphQL\Checkout\DeliveryMethod\DataType\DeliveryMethod;
 use OxidEsales\GraphQL\Checkout\DeliveryMethod\Exception\DeliveryMethodNotFound;
 use OxidEsales\GraphQL\Checkout\DeliveryMethod\Service\DeliveryMethod as DeliveryMethodService;
@@ -36,14 +38,24 @@ final class BasketRelationService
     /** @var DeliveryMethodService */
     private $deliveryMethodService;
 
+    /** @var BasketInfrastructure */
+    private $basketInfrastructure;
+
+    /** @var LegacyService */
+    private $legacyService;
+
     public function __construct(
         DeliveryAddressService $deliveryAddressService,
         PaymentService $paymentService,
-        DeliveryMethodService $deliveryMethodService
+        DeliveryMethodService $deliveryMethodService,
+        BasketInfrastructure $basketInfrastructure,
+        LegacyService $legacyService
     ) {
         $this->deliveryAddressService = $deliveryAddressService;
         $this->paymentService         = $paymentService;
         $this->deliveryMethodService  = $deliveryMethodService;
+        $this->basketInfrastructure   = $basketInfrastructure;
+        $this->legacyService          = $legacyService;
     }
 
     /**
@@ -108,5 +120,19 @@ final class BasketRelationService
         }
 
         return $deliveryMethod;
+    }
+
+    /**
+     * @Field()
+     */
+    public function timeLeftInSeconds(Basket $basket): ?int
+    {
+        $timeLeft = null;
+
+        if ($this->legacyService->getConfigParam('blPsBasketReservationEnabled')) {
+            $timeLeft = $this->basketInfrastructure->getTimeLeftInSeconds($basket);
+        }
+
+        return $timeLeft;
     }
 }

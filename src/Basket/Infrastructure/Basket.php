@@ -11,11 +11,13 @@ namespace OxidEsales\GraphQL\Checkout\Basket\Infrastructure;
 
 use OxidEsales\Eshop\Application\Model\Address as EshopAddressModel;
 use OxidEsales\Eshop\Application\Model\Basket as EshopBasketModel;
+use OxidEsales\Eshop\Application\Model\BasketReservation as EshopBasketReservationModel;
 use OxidEsales\Eshop\Application\Model\DeliverySet as EshopDeliverySetModel;
 use OxidEsales\Eshop\Application\Model\DeliverySetList as EshopDeliverySetListModel;
 use OxidEsales\Eshop\Application\Model\Order as OrderModel;
 use OxidEsales\Eshop\Application\Model\User as EshopUserModel;
 use OxidEsales\Eshop\Application\Model\UserBasket as EshopUserBasketModel;
+use OxidEsales\Eshop\Core\Registry as EshopRegistry;
 use OxidEsales\GraphQL\Account\Address\Service\DeliveryAddress as DeliveryAddressService;
 use OxidEsales\GraphQL\Account\Basket\DataType\Basket as BasketDataType;
 use OxidEsales\GraphQL\Account\Country\DataType\Country as CountryDataType;
@@ -195,5 +197,23 @@ final class Basket
 
         //return order data type
         return new OrderDataType($orderModel);
+    }
+
+    public function getTimeLeftInSeconds(BasketDataType $userBasket): int
+    {
+        EshopRegistry::getSession()->setVariable(
+            'basketReservationToken',
+            (string) $userBasket->getUserId()->val()
+        );
+
+        $basketReservations = oxNew(EshopBasketReservationModel::class);
+
+        return (int) $basketReservations->getTimeLeft();
+    }
+
+    public function discardUnusedReservations(int $amount): void
+    {
+        $basketReservations = oxNew(EshopBasketReservationModel::class);
+        $basketReservations->discardUnusedReservations($amount);
     }
 }

@@ -25,6 +25,7 @@ use OxidEsales\GraphQL\Account\Payment\DataType\Payment as PaymentDataType;
 use OxidEsales\GraphQL\Base\Exception\InvalidToken;
 use OxidEsales\GraphQL\Base\Service\Authentication;
 use OxidEsales\GraphQL\Base\Service\Authorization;
+use OxidEsales\GraphQL\Base\Service\Legacy as LegacyService;
 use OxidEsales\GraphQL\Catalogue\Shared\Infrastructure\Repository as Repository;
 use OxidEsales\GraphQL\Checkout\Basket\Exception\PlaceOrder;
 use OxidEsales\GraphQL\Checkout\Basket\Infrastructure\Basket as BasketInfrastructure;
@@ -63,6 +64,9 @@ final class Basket
     /** @var BasketRelationService */
     private $basketRelationService;
 
+    /** @var LegacyService */
+    private $legacyService;
+
     public function __construct(
         Repository $repository,
         Authentication $authenticationService,
@@ -72,7 +76,8 @@ final class Basket
         AccountBasketService $accountBasketService,
         CountryService $countryService,
         CustomerService $customerService,
-        BasketRelationService $basketRelationService
+        BasketRelationService $basketRelationService,
+        LegacyService $legacyService
     ) {
         $this->repository             = $repository;
         $this->authenticationService  = $authenticationService;
@@ -83,6 +88,7 @@ final class Basket
         $this->customerService        = $customerService;
         $this->deliveryAddressService = $deliveryAddressService;
         $this->basketRelationService  = $basketRelationService;
+        $this->legacyService          = $legacyService;
     }
 
     /**
@@ -269,7 +275,6 @@ final class Basket
      */
     public function placeOrder(CustomerDataType $customer, BasketDataType $userBasket): OrderDataType
     {
-        $userBasket->id();
         /** @var DeliveryMethodDataType $deliveryMethod */
         $deliveryMethod = $this->basketRelationService->deliveryMethod($userBasket);
         /** @var PaymentDataType $payment */
@@ -283,10 +288,30 @@ final class Basket
             throw UnavailablePayment::byId((string) $payment->getId()->val());
         }
 
+        if ($this->legacyService->getConfigParam('blPsBasketReservationEnabled')) {
+            $this->handleBasketReservations($userBasket);
+        }
+
         return $this->basketInfrastructure->placeOrder(
             $customer,
             $userBasket
         );
+    }
+
+    /**
+     * @throws PlaceOrder
+     */
+    private function handleBasketReservations(BasketDataType $userBasket): void
+    {
+        $discardLimit = max(
+            200,
+            (int) $this->legacyService->getConfigParam('iBasketReservationCleanPerRequest')
+        );
+        $this->basketInfrastructure->discardUnusedReservations($discardLimit);
+
+        if (!$this->basketRelationService->timeLeftInSeconds($userBasket)) {
+            throw PlaceOrder::timedOutBasket((string) $userBasket->id()->val());
+        }
     }
 
     private function deliveryAddressBelongsToUser(string $deliveryAddressId): bool

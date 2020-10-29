@@ -29,6 +29,8 @@ final class BasketSetDeliveryMethodMutationCest extends BaseCest
 
     private const BASKET_TITLE = 'deliverymethodbasket';
 
+    private const AVAILABLE_STANDARD_DELIVERY_SET_ID = 'oxidstandard';
+
     private const AVAILABLE_DELIVERY_SET_ID = '_deliveryset';
 
     private const UNAVAILABLE_DELIVERY_SET_ID = '_unavailabledeliverymethod';
@@ -36,6 +38,8 @@ final class BasketSetDeliveryMethodMutationCest extends BaseCest
     private const NON_EXISTING_DELIVERY_SET_ID = 'non-existing-delivery-set-id';
 
     private const NON_EXISTING_BASKET_ID = 'non-existing-basket-id';
+
+    private const AVAILABLE_PRODUCT_ID = 'dc5ffdf380e15674b56dd562a7cb6aec';
 
     private $basketId;
 
@@ -67,6 +71,40 @@ final class BasketSetDeliveryMethodMutationCest extends BaseCest
 
         $I->assertSame($this->basketId, $basket['id']);
         $I->assertSame(self::AVAILABLE_DELIVERY_SET_ID, $basket['deliveryMethod']['id']);
+        $I->assertSame(6.66, $basket['cost']['delivery']['price']);
+    }
+
+    public function testChangeDeliverySet(AcceptanceTester $I): void
+    {
+        $I->sendGQLQuery(
+            $this->basketSetDelivery(self::AVAILABLE_DELIVERY_SET_ID)
+        );
+        $result = $I->grabJsonResponseAsArray();
+        $basket = $result['data']['basketSetDeliveryMethod'];
+
+        $I->assertSame($this->basketId, $basket['id']);
+        $I->assertSame(self::AVAILABLE_DELIVERY_SET_ID, $basket['deliveryMethod']['id']);
+        $I->assertSame(6.66, $basket['cost']['delivery']['price']);
+
+        $I->sendGQLQuery(
+            $this->basketSetDelivery(self::AVAILABLE_STANDARD_DELIVERY_SET_ID)
+        );
+        $result = $I->grabJsonResponseAsArray();
+        $basket = $result['data']['basketSetDeliveryMethod'];
+
+        $I->assertSame($this->basketId, $basket['id']);
+        $I->assertSame(self::AVAILABLE_STANDARD_DELIVERY_SET_ID, $basket['deliveryMethod']['id']);
+        $I->assertSame(3.9, $basket['cost']['delivery']['price']);
+
+        $I->sendGQLQuery(
+            $this->basketSetDelivery(self::AVAILABLE_DELIVERY_SET_ID)
+        );
+        $result = $I->grabJsonResponseAsArray();
+        $basket = $result['data']['basketSetDeliveryMethod'];
+
+        $I->assertSame($this->basketId, $basket['id']);
+        $I->assertSame(self::AVAILABLE_DELIVERY_SET_ID, $basket['deliveryMethod']['id']);
+        $I->assertSame(6.66, $basket['cost']['delivery']['price']);
     }
 
     public function setUnavailableDeliveryMethodToBasket(AcceptanceTester $I): void
@@ -126,6 +164,19 @@ final class BasketSetDeliveryMethodMutationCest extends BaseCest
         $result = $I->grabJsonResponseAsArray();
 
         $this->basketId = $result['data']['basketCreate']['id'];
+
+        // Add a product because basket with no products will have 0 value and skip calculations
+        $I->sendGQLQuery('
+            mutation {
+                basketAddProduct(
+                    basketId: "' . $this->basketId . '",
+                    productId: "' . self::AVAILABLE_PRODUCT_ID . '",
+                    amount: 1
+                ) {
+                    id
+                }
+            }
+        ');
     }
 
     private function basketRemove($I): void
@@ -148,6 +199,12 @@ final class BasketSetDeliveryMethodMutationCest extends BaseCest
                 id
                 deliveryMethod {
                     id
+                }
+                cost {
+                    total
+                    delivery {
+                        price
+                    }
                 }
             }
         }';

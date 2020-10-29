@@ -176,6 +176,10 @@ abstract class PlaceOrderBaseCest extends BaseCest
         ';
         $result = $this->getGQLResponse($I, $mutation, $variables, $status);
 
+        if ($status === HttpCode::BAD_REQUEST) {
+            return (string) $result['errors'][0]['message'];
+        }
+
         return (string) $result['data']['basketSetDeliveryMethod']['deliveryMethod']['id'];
     }
 

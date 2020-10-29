@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace OxidEsales\GraphQL\Checkout\Tests\Codeception\Acceptance\Basket;
 
 use Codeception\Util\HttpCode;
+use OxidEsales\GraphQL\Checkout\DeliveryMethod\Exception\UnavailableDeliveryMethod;
 use OxidEsales\GraphQL\Checkout\Tests\Codeception\AcceptanceTester;
 
 /**
@@ -170,7 +171,10 @@ final class PlaceOrderCest extends PlaceOrderBaseCest
         $this->setBasketDeliveryAddress($I, $basketId, self::ALTERNATE_COUNTRY);
 
         //shipping method not supported
-        $this->setBasketDeliveryMethod($I, $basketId, self::SHIPPING_STANDARD, HttpCode::BAD_REQUEST);
+        $errorMessage         = $this->setBasketDeliveryMethod($I, $basketId, self::SHIPPING_STANDARD, HttpCode::BAD_REQUEST);
+        $expectedError        = UnavailableDeliveryMethod::byId(self::SHIPPING_STANDARD);
+        $expectedErrorMessage = $expectedError->getMessage();
+        $I->assertEquals($expectedErrorMessage, $errorMessage);
 
         //remove basket
         $this->removeBasket($I, $basketId, self::USERNAME);

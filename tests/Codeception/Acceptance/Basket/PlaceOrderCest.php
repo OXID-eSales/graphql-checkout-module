@@ -23,7 +23,7 @@ final class PlaceOrderCest extends PlaceOrderBaseCest
     public function placeOrderUsingInvoiceAddress(AcceptanceTester $I): void
     {
         $I->wantToTest('placing an order successfully with invoice address only');
-        $I->login(self::USERNAME, self::PASSWORD);
+        $I->login(self::USERNAME, self::PASSWORD, 0);
 
         //prepare basket
         $basketId = $this->createBasket($I, 'my_cart_one');

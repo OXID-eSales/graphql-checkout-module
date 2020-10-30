@@ -11,6 +11,7 @@ namespace OxidEsales\GraphQL\Checkout\Tests\Codeception\Acceptance\Basket;
 
 use Codeception\Scenario;
 use Codeception\Util\HttpCode;
+use OxidEsales\Facts\Facts;
 use OxidEsales\GraphQL\Checkout\Tests\Codeception\Acceptance\BaseCest;
 use OxidEsales\GraphQL\Checkout\Tests\Codeception\AcceptanceTester;
 use TheCodingMachine\GraphQLite\Types\ID;
@@ -386,11 +387,30 @@ abstract class PlaceOrderBaseCest extends BaseCest
                 'OXRESERVED'       => 0,
                 'OXVOUCHERNR'      => 'voucher1',
                 'OXVOUCHERSERIEID' => 'voucherserie1',
-                'OXID'             => 'voucher1id',
                 'OXDISCOUNT'       => 5,
-                'OXTIMESTAMP'      => date('Y-m-d'),
+                'OXID'             => 'voucher1id',
+                'OXTIMESTAMP'      => date('Y-m-d', strtotime('-1 day')),
                 'OEGQL_BASKETID'   => 'null',
             ]
         );
+
+        $facts = new Facts();
+
+        if ($facts->isEnterprise()) {
+            $I->haveInDatabase(
+                'oxvoucherseries2shop',
+                [
+                    'OXSHOPID'      => 1,
+                    'OXMAPOBJECTID' => 1,
+                ]
+            );
+            $I->haveInDatabase(
+                'oxvoucherseries2shop',
+                [
+                    'OXSHOPID'      => 1,
+                    'OXMAPOBJECTID' => 2,
+                ]
+            );
+        }
     }
 }

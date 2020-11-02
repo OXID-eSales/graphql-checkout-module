@@ -40,7 +40,4 @@ $aModule = [
     ],
     'settings'    => [
     ],
-    'events'      => [
-        'onActivate' => 'OxidEsales\\GraphQL\\Checkout\\Framework\\ModuleSetup::onActivate',
-    ],
 ];

@@ -366,7 +366,7 @@ final class PlaceOrderCest extends PlaceOrderBaseCest
         $this->setBasketPaymentMethod($I, $basketId, self::PAYMENT_STANDARD);
 
         //place the order
-        $result  = $this->placeOrder($I, $basketId, HttpCode::OK, true);
+        $result  = $this->placeOrder($I, $basketId, HttpCode::OK);
         $orderId = $result['data']['placeOrder']['id'];
 
         //check order history
@@ -376,7 +376,6 @@ final class PlaceOrderCest extends PlaceOrderBaseCest
 
         //remove basket
         $this->removeBasket($I, $basketId, self::USERNAME);
-        $I->updateConfigInDatabase('blConfirmAGB', false);
     }
 
     public function placeOrderWithConfirmAGBNotRequiredAndRefused(AcceptanceTester $I): void
@@ -390,17 +389,14 @@ final class PlaceOrderCest extends PlaceOrderBaseCest
         $this->setBasketPaymentMethod($I, $basketId, self::PAYMENT_STANDARD);
 
         //place the order
-        $result  = $this->placeOrder($I, $basketId, HttpCode::OK, false);
-        $orderId = $result['data']['placeOrder']['id'];
-
-        //check order history
-        $orders = $this->getOrderFromOrderHistory($I);
-        $I->assertEquals($orders['id'], $orderId);
-        $I->assertEquals($orders['cost']['total'], 63.7);
+        $result               = $this->placeOrder($I, $basketId, HttpCode::BAD_REQUEST, false);
+        $errorMessage         = (string) $result['errors'][0]['message'];
+        $expectedError        = PlaceOrder::noTosConsent($basketId);
+        $expectedErrorMessage = $expectedError->getMessage();
+        $I->assertEquals($expectedErrorMessage, $errorMessage);
 
         //remove basket
         $this->removeBasket($I, $basketId, self::USERNAME);
-        $I->updateConfigInDatabase('blConfirmAGB', false);
     }
 
     public function placeOrderWithDownloadableProduct(AcceptanceTester $I): void

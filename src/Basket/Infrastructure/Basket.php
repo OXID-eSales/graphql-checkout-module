@@ -158,7 +158,7 @@ final class Basket
 
         $tosConsentConfig = EshopRegistry::getConfig()->getConfigParam('blConfirmAGB');
 
-        if ($tosConsentConfig === true && $tosConsent !== true) {
+        if ($tosConsentConfig === true && $tosConsent !== true || $tosConsent === false) {
             throw PlaceOrderException::noTosConsent($userBasketModel->getId());
         }
     }

@@ -16,6 +16,7 @@ use OxidEsales\Eshop\Application\Model\DeliverySetList as EshopDeliverySetListMo
 use OxidEsales\Eshop\Application\Model\Order as OrderModel;
 use OxidEsales\Eshop\Application\Model\User as EshopUserModel;
 use OxidEsales\Eshop\Application\Model\UserBasket as EshopUserBasketModel;
+use OxidEsales\Eshop\Core\Registry as EshopRegistry;
 use OxidEsales\GraphQL\Account\Address\Service\DeliveryAddress as DeliveryAddressService;
 use OxidEsales\GraphQL\Account\Basket\DataType\Basket as BasketDataType;
 use OxidEsales\GraphQL\Account\Country\DataType\Country as CountryDataType;
@@ -150,14 +151,24 @@ final class Basket
         return $countryId;
     }
 
+    public function checkTosConsent(?bool $tosConsent, BasketDataType $userBasket): void
+    {
+        /** @var EshopUserBasketModel $userBasketModel */
+        $userBasketModel = $userBasket->getEshopModel();
+
+        $tosConsentConfig = EshopRegistry::getConfig()->getConfigParam('blConfirmAGB');
+
+        if ($tosConsentConfig === true && $tosConsent !== true) {
+            throw PlaceOrderException::noTosConsent($userBasketModel->getId());
+        }
+    }
+
     public function placeOrder(
         CustomerDataType $customer,
         BasketDataType $userBasket
     ): OrderDataType {
-
         /** @var EshopUserModel $userModel */
         $userModel = $customer->getEshopModel();
-
         /** @var EshopUserBasketModel $userBasketModel */
         $userBasketModel = $userBasket->getEshopModel();
 

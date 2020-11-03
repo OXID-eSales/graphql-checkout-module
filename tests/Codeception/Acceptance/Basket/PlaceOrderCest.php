@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace OxidEsales\GraphQL\Checkout\Tests\Codeception\Acceptance\Basket;
 
 use Codeception\Util\HttpCode;
+use OxidEsales\GraphQL\Checkout\Basket\Exception\PlaceOrder;
 use OxidEsales\GraphQL\Checkout\DeliveryMethod\Exception\UnavailableDeliveryMethod;
 use OxidEsales\GraphQL\Checkout\Tests\Codeception\AcceptanceTester;
 
@@ -283,9 +284,138 @@ final class PlaceOrderCest extends PlaceOrderBaseCest
         $this->removeBasket($I, $basketId, self::USERNAME);
     }
 
-    public function placeOrderWithConfirmAGB(): void
+    /**
+     * @group debuggeronis
+     */
+    public function placeOrderWithConfirmAGB(AcceptanceTester $I): void
     {
-        //TODO: blConfirmAGB
+        $I->updateConfigInDatabase('blConfirmAGB', true);
+        $I->login(self::USERNAME, self::PASSWORD);
+
+        //prepare basket with invoice address
+        $basketId = $this->createBasket($I, 'cart_with_agb_given');
+        $this->addProductToBasket($I, $basketId, self::PRODUCT_ID, 2);
+        $this->setBasketDeliveryMethod($I, $basketId, self::SHIPPING_STANDARD);
+        $this->setBasketPaymentMethod($I, $basketId, self::PAYMENT_STANDARD);
+
+        //place the order
+        $result  = $this->placeOrder($I, $basketId, HttpCode::OK, true);
+        $orderId = $result['data']['placeOrder']['id'];
+
+        //check order history
+        $orders = $this->getOrderFromOrderHistory($I);
+        $I->assertEquals($orders['id'], $orderId);
+        $I->assertEquals($orders['cost']['total'], 63.7);
+
+        //remove basket
+        $this->removeBasket($I, $basketId, self::USERNAME);
+        $I->updateConfigInDatabase('blConfirmAGB', false);
+    }
+
+    /**
+     * @group debuggeronis
+     */
+    public function placeOrderWithConfirmAGBNotGiven(AcceptanceTester $I): void
+    {
+        $I->updateConfigInDatabase('blConfirmAGB', true);
+        $I->login(self::USERNAME, self::PASSWORD);
+
+        //prepare basket with invoice address
+        $basketId = $this->createBasket($I, 'cart_without_agb_given');
+        $this->addProductToBasket($I, $basketId, self::PRODUCT_ID, 2);
+        $this->setBasketDeliveryMethod($I, $basketId, self::SHIPPING_STANDARD);
+        $this->setBasketPaymentMethod($I, $basketId, self::PAYMENT_STANDARD);
+
+        //place the order
+        $result               = $this->placeOrder($I, $basketId, HttpCode::BAD_REQUEST);
+        $errorMessage         = (string) $result['errors'][0]['message'];
+        $expectedError        = PlaceOrder::noTosConsent($basketId);
+        $expectedErrorMessage = $expectedError->getMessage();
+        $I->assertEquals($expectedErrorMessage, $errorMessage);
+
+        //remove basket
+        $this->removeBasket($I, $basketId, self::USERNAME);
+        $I->updateConfigInDatabase('blConfirmAGB', false);
+    }
+
+    /**
+     * @group debuggeronis
+     */
+    public function placeOrderWithConfirmAGBRefused(AcceptanceTester $I): void
+    {
+        $I->updateConfigInDatabase('blConfirmAGB', true);
+        $I->login(self::USERNAME, self::PASSWORD);
+
+        //prepare basket with invoice address
+        $basketId = $this->createBasket($I, 'cart_with_agb_refused');
+        $this->addProductToBasket($I, $basketId, self::PRODUCT_ID, 2);
+        $this->setBasketDeliveryMethod($I, $basketId, self::SHIPPING_STANDARD);
+        $this->setBasketPaymentMethod($I, $basketId, self::PAYMENT_STANDARD);
+
+        //place the order
+        $result               = $this->placeOrder($I, $basketId, HttpCode::BAD_REQUEST, false);
+        $errorMessage         = (string) $result['errors'][0]['message'];
+        $expectedError        = PlaceOrder::noTosConsent($basketId);
+        $expectedErrorMessage = $expectedError->getMessage();
+        $I->assertEquals($expectedErrorMessage, $errorMessage);
+
+        //remove basket
+        $this->removeBasket($I, $basketId, self::USERNAME);
+        $I->updateConfigInDatabase('blConfirmAGB', false);
+    }
+
+    /**
+     * @group debuggeronis
+     */
+    public function placeOrderWithConfirmAGBNotRequiredButGiven(AcceptanceTester $I): void
+    {
+        $I->login(self::USERNAME, self::PASSWORD);
+
+        //prepare basket with invoice address
+        $basketId = $this->createBasket($I, 'cart_with_agb_not_required_but_given');
+        $this->addProductToBasket($I, $basketId, self::PRODUCT_ID, 2);
+        $this->setBasketDeliveryMethod($I, $basketId, self::SHIPPING_STANDARD);
+        $this->setBasketPaymentMethod($I, $basketId, self::PAYMENT_STANDARD);
+
+        //place the order
+        $result  = $this->placeOrder($I, $basketId, HttpCode::OK, true);
+        $orderId = $result['data']['placeOrder']['id'];
+
+        //check order history
+        $orders = $this->getOrderFromOrderHistory($I);
+        $I->assertEquals($orders['id'], $orderId);
+        $I->assertEquals($orders['cost']['total'], 63.7);
+
+        //remove basket
+        $this->removeBasket($I, $basketId, self::USERNAME);
+        $I->updateConfigInDatabase('blConfirmAGB', false);
+    }
+
+    /**
+     * @group debuggeronis
+     */
+    public function placeOrderWithConfirmAGBNotRequiredAndRefused(AcceptanceTester $I): void
+    {
+        $I->login(self::USERNAME, self::PASSWORD);
+
+        //prepare basket with invoice address
+        $basketId = $this->createBasket($I, 'cart_with_agb_not_required_but_refused');
+        $this->addProductToBasket($I, $basketId, self::PRODUCT_ID, 2);
+        $this->setBasketDeliveryMethod($I, $basketId, self::SHIPPING_STANDARD);
+        $this->setBasketPaymentMethod($I, $basketId, self::PAYMENT_STANDARD);
+
+        //place the order
+        $result  = $this->placeOrder($I, $basketId, HttpCode::OK, false);
+        $orderId = $result['data']['placeOrder']['id'];
+
+        //check order history
+        $orders = $this->getOrderFromOrderHistory($I);
+        $I->assertEquals($orders['id'], $orderId);
+        $I->assertEquals($orders['cost']['total'], 63.7);
+
+        //remove basket
+        $this->removeBasket($I, $basketId, self::USERNAME);
+        $I->updateConfigInDatabase('blConfirmAGB', false);
     }
 
     public function placeOrderWithDownloadableProduct(AcceptanceTester $I): void

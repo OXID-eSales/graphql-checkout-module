@@ -267,8 +267,10 @@ final class Basket
      * @throws UnavailablePayment
      * @throws PlaceOrder
      */
-    public function placeOrder(CustomerDataType $customer, BasketDataType $userBasket): OrderDataType
+    public function placeOrder(CustomerDataType $customer, BasketDataType $userBasket, ?bool $tosConsent): OrderDataType
     {
+        $this->basketInfrastructure->checkTosConsent($tosConsent, $userBasket);
+
         $userBasket->id();
         /** @var DeliveryMethodDataType $deliveryMethod */
         $deliveryMethod = $this->basketRelationService->deliveryMethod($userBasket);

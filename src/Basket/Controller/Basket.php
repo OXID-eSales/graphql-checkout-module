@@ -98,7 +98,7 @@ final class Basket
      * @Mutation()
      * @Logged()
      */
-    public function placeOrder(ID $basketId): OrderDataType
+    public function placeOrder(ID $basketId, ?bool $tosConsent = null): OrderDataType
     {
         /** @var CustomerDataType $customer */
         $customer = $this->customerService->customer(
@@ -109,7 +109,8 @@ final class Basket
 
         return $this->basketService->placeOrder(
             $customer,
-            $userBasket
+            $userBasket,
+            $tosConsent
         );
     }
 }

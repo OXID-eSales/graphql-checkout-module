@@ -284,9 +284,6 @@ final class PlaceOrderCest extends PlaceOrderBaseCest
         $this->removeBasket($I, $basketId, self::USERNAME);
     }
 
-    /**
-     * @group debuggeronis
-     */
     public function placeOrderWithConfirmAGB(AcceptanceTester $I): void
     {
         $I->updateConfigInDatabase('blConfirmAGB', true);
@@ -312,9 +309,6 @@ final class PlaceOrderCest extends PlaceOrderBaseCest
         $I->updateConfigInDatabase('blConfirmAGB', false);
     }
 
-    /**
-     * @group debuggeronis
-     */
     public function placeOrderWithConfirmAGBNotGiven(AcceptanceTester $I): void
     {
         $I->updateConfigInDatabase('blConfirmAGB', true);
@@ -338,9 +332,6 @@ final class PlaceOrderCest extends PlaceOrderBaseCest
         $I->updateConfigInDatabase('blConfirmAGB', false);
     }
 
-    /**
-     * @group debuggeronis
-     */
     public function placeOrderWithConfirmAGBRefused(AcceptanceTester $I): void
     {
         $I->updateConfigInDatabase('blConfirmAGB', true);
@@ -364,9 +355,6 @@ final class PlaceOrderCest extends PlaceOrderBaseCest
         $I->updateConfigInDatabase('blConfirmAGB', false);
     }
 
-    /**
-     * @group debuggeronis
-     */
     public function placeOrderWithConfirmAGBNotRequiredButGiven(AcceptanceTester $I): void
     {
         $I->login(self::USERNAME, self::PASSWORD);
@@ -391,9 +379,6 @@ final class PlaceOrderCest extends PlaceOrderBaseCest
         $I->updateConfigInDatabase('blConfirmAGB', false);
     }
 
-    /**
-     * @group debuggeronis
-     */
     public function placeOrderWithConfirmAGBNotRequiredAndRefused(AcceptanceTester $I): void
     {
         $I->login(self::USERNAME, self::PASSWORD);

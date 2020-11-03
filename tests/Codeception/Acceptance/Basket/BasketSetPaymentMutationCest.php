@@ -31,9 +31,13 @@ final class BasketSetPaymentMutationCest extends BaseCest
 
     private const BASKET_TITLE = 'paymentsetbasket';
 
+    private const BASKET_PAYMENT_TITLE = 'basket_payment';
+
     private const DELIVERY_SET_ID = 'oxidstandard';
 
     private const AVAILABLE_PAYMENT_ID = 'oxidinvoice';
+
+    private const AVAILABLE_PAYMENT_CASH_ON_DELIVERY_ID = 'oxidcashondel';
 
     private const UNAVAILABLE_PAYMENT_ID = 'oxempty';
 
@@ -148,6 +152,35 @@ final class BasketSetPaymentMutationCest extends BaseCest
         $this->setCountry(self::COUNTRY_DE);
     }
 
+    public function testPaymentCostOnChange(AcceptanceTester $I): void
+    {
+        $I->sendGQLQuery(
+            $this->basketSetPayment(self::AVAILABLE_PAYMENT_ID, self::BASKET_PAYMENT_TITLE)
+        );
+
+        $I->seeResponseCodeIs(HttpCode::OK);
+        $I->seeResponseIsJson();
+        $result = $I->grabJsonResponseAsArray();
+
+        $basket = $result['data']['basketSetPayment'];
+
+        $I->assertSame(self::BASKET_PAYMENT_TITLE, $basket['id']);
+        $I->assertSame(self::AVAILABLE_PAYMENT_ID, $basket['payment']['id']);
+        $I->assertSame(0, $basket['cost']['payment']['price']);
+        $I->assertSame(33.8, $basket['cost']['total']);
+
+        $I->sendGQLQuery(
+            $this->basketSetPayment(self::AVAILABLE_PAYMENT_CASH_ON_DELIVERY_ID, self::BASKET_PAYMENT_TITLE)
+        );
+        $result = $I->grabJsonResponseAsArray();
+        $basket = $result['data']['basketSetPayment'];
+
+        $I->assertSame(self::BASKET_PAYMENT_TITLE, $basket['id']);
+        $I->assertSame(self::AVAILABLE_PAYMENT_CASH_ON_DELIVERY_ID, $basket['payment']['id']);
+        $I->assertSame(7.5, $basket['cost']['payment']['price']);
+        $I->assertSame(41.3, $basket['cost']['total']);
+    }
+
     private function basketCreate(AcceptanceTester $I): void
     {
         $I->login(self::USERNAME, self::PASSWORD);
@@ -199,6 +232,12 @@ final class BasketSetPaymentMutationCest extends BaseCest
                 id
                 payment {
                     id
+                }
+                cost {
+                    payment {
+                        price
+                    }
+                    total
                 }
             }
         }';

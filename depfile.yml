@@ -12,21 +12,23 @@ layers:
     collectors:
       - type: className
         regex: .*GraphQL.*Service.*
-  - name: Repository
-    collectors:
-      - type: className
-        regex: .*GraphQL.*Repository.*
   - name: Infrastructure
     collectors:
-      - type: directory
-        regex: .*vendor/oxid-esales/oxideshop-ce/source/.*
-      - type: directory
-        regex: .*vendor/oxid-esales/oxideshop-unified-namespace-generator/.*
+        - type: className
+          regex: .*GraphQL.*Repository.*
+        - type: className
+          regex: .*GraphQL.*Infrastructure.*
+  - name: Core
+    collectors:
+        - type: directory
+          regex: .*vendor/oxid-esales/oxideshop-ce/source/.*
+        - type: directory
+          regex: .*vendor/oxid-esales/oxideshop-unified-namespace-generator/.*
 ruleset:
-  Controller:
-    - Service
-  Service:
-    - Repository
-  Repository:
-    - Infrastructure
-  Infrastructure: ~
+    Controller:
+        - Service
+    Service:
+        - Infrastructure
+    Infrastructure:
+        - Core
+    Core: ~

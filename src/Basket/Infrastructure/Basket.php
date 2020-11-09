@@ -11,8 +11,6 @@ namespace OxidEsales\GraphQL\Checkout\Basket\Infrastructure;
 
 use OxidEsales\Eshop\Application\Model\DeliverySet as EshopDeliverySetModel;
 use OxidEsales\Eshop\Application\Model\DeliverySetList as EshopDeliverySetListModel;
-use OxidEsales\Eshop\Application\Model\User as EshopUserModel;
-use OxidEsales\GraphQL\Account\Address\Service\DeliveryAddress as DeliveryAddressService;
 use OxidEsales\GraphQL\Account\Basket\DataType\Basket as BasketDataType;
 use OxidEsales\GraphQL\Account\Country\DataType\Country as CountryDataType;
 use OxidEsales\GraphQL\Account\Customer\DataType\Customer as CustomerDataType;
@@ -29,17 +27,12 @@ final class Basket
     /** @var AccountBasketInfrastructure */
     private $accountBasketInfrastructure;
 
-    /** @var DeliveryAddressService */
-    private $deliveryAddressService;
-
     public function __construct(
         Repository $repository,
-        AccountBasketInfrastructure $accountBasketInfrastructure,
-        DeliveryAddressService $deliveryAddressService
+        AccountBasketInfrastructure $accountBasketInfrastructure
     ) {
         $this->repository                  = $repository;
         $this->accountBasketInfrastructure = $accountBasketInfrastructure;
-        $this->deliveryAddressService      = $deliveryAddressService;
     }
 
     public function setDeliveryAddress(BasketDataType $basket, string $deliveryAddressId): bool
@@ -119,28 +112,5 @@ final class Basket
         }
 
         return $result;
-    }
-
-    /**
-     * Calculate basket delivery country id
-     */
-    public function getBasketDeliveryCountryId(BasketDataType $basket): string
-    {
-        $countryId = null;
-
-        if ($basketDeliveryAddressId = $basket->getEshopModel()->getFieldData('OEGQL_DELADDRESSID')) {
-            $basketDeliveryAddress = $this->deliveryAddressService->getDeliveryAddress($basketDeliveryAddressId);
-            $countryId             = (string) $basketDeliveryAddress->countryId()->val();
-        }
-
-        // if basket don't have delivery set, use basket user active address country id
-        if (!$countryId) {
-            /** @var EshopUserModel $userModel */
-            $userModel = oxNew(EshopUserModel::class);
-            $userModel->load((string) $basket->getUserId()->val());
-            $countryId = (string) $userModel->getActiveCountry();
-        }
-
-        return $countryId;
     }
 }

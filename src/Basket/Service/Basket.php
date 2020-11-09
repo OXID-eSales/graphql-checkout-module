@@ -18,6 +18,7 @@ use OxidEsales\GraphQL\Account\Basket\Exception\BasketAccessForbidden;
 use OxidEsales\GraphQL\Account\Basket\Exception\BasketNotFound;
 use OxidEsales\GraphQL\Account\Basket\Service\Basket as AccountBasketService;
 use OxidEsales\GraphQL\Account\Country\Service\Country as CountryService;
+use OxidEsales\GraphQL\Account\Customer\Infrastructure\Customer as CustomerInfrastructure;
 use OxidEsales\GraphQL\Account\Customer\Service\Customer as CustomerService;
 use OxidEsales\GraphQL\Account\Payment\DataType\Payment as PaymentDataType;
 use OxidEsales\GraphQL\Base\Exception\InvalidToken;
@@ -54,6 +55,9 @@ final class Basket
     /** @var AccountBasketService */
     private $accountBasketService;
 
+    /** @var CustomerInfrastructure */
+    private $customerInfrastructure;
+
     /** @var DeliveryAddressService */
     private $deliveryAddressService;
 
@@ -64,17 +68,19 @@ final class Basket
         BasketInfrastructure $basketInfrastructure,
         DeliveryAddressService $deliveryAddressService,
         AccountBasketService $accountBasketService,
+        CustomerInfrastructure $customerInfrastructure,
         CountryService $countryService,
         CustomerService $customerService
     ) {
-        $this->repository             = $repository;
-        $this->authenticationService  = $authenticationService;
-        $this->authorizationService   = $authorizationService;
-        $this->basketInfrastructure   = $basketInfrastructure;
-        $this->accountBasketService   = $accountBasketService;
-        $this->countryService         = $countryService;
-        $this->customerService        = $customerService;
-        $this->deliveryAddressService = $deliveryAddressService;
+        $this->repository               = $repository;
+        $this->authenticationService    = $authenticationService;
+        $this->authorizationService     = $authorizationService;
+        $this->basketInfrastructure     = $basketInfrastructure;
+        $this->accountBasketService     = $accountBasketService;
+        $this->customerInfrastructure   = $customerInfrastructure;
+        $this->countryService           = $countryService;
+        $this->customerService          = $customerService;
+        $this->deliveryAddressService   = $deliveryAddressService;
     }
 
     /**
@@ -134,7 +140,7 @@ final class Basket
         }
 
         $customer  = $this->customerService->customer((string) $basket->getUserId()->val());
-        $countryId = $this->basketInfrastructure->getBasketDeliveryCountryId($basket);
+        $countryId = $this->getBasketDeliveryCountryId($basket);
         $country   = $this->countryService->country($countryId);
 
         $deliveries = $this->basketInfrastructure->getBasketAvailableDeliveryMethods(
@@ -167,7 +173,7 @@ final class Basket
     {
         $basket    = $this->getBasketById($basketId);
         $customer  = $this->customerService->customer((string) $basket->getUserId()->val());
-        $countryId = $this->basketInfrastructure->getBasketDeliveryCountryId($basket);
+        $countryId = $this->getBasketDeliveryCountryId($basket);
         $country   = $this->countryService->country($countryId);
 
         $deliveries = $this->basketInfrastructure->getBasketAvailableDeliveryMethods(
@@ -199,7 +205,7 @@ final class Basket
     {
         $basket    = $this->getBasketById($basketId);
         $customer  = $this->customerService->customer((string) $basket->getUserId()->val());
-        $countryId = $this->basketInfrastructure->getBasketDeliveryCountryId($basket);
+        $countryId = $this->getBasketDeliveryCountryId($basket);
         $country   = $this->countryService->country($countryId);
 
         return $this->basketInfrastructure->getBasketAvailableDeliveryMethods(
@@ -216,7 +222,7 @@ final class Basket
     {
         $basket    = $this->getBasketById($basketId);
         $customer  = $this->customerService->customer((string) $basket->getUserId()->val());
-        $countryId = $this->basketInfrastructure->getBasketDeliveryCountryId($basket);
+        $countryId = $this->getBasketDeliveryCountryId($basket);
         $country   = $this->countryService->country($countryId);
 
         $deliveries = $this->basketInfrastructure->getBasketAvailableDeliveryMethods(
@@ -252,6 +258,25 @@ final class Basket
         }
 
         return $belongs;
+    }
+
+    private function getBasketDeliveryCountryId(BasketDataType $basket): string
+    {
+        $countryId = null;
+
+        if ($basketDeliveryAddressId = $basket->getEshopModel()->getFieldData('OEGQL_DELADDRESSID')) {
+            $basketDeliveryAddress = $this->deliveryAddressService->getDeliveryAddress($basketDeliveryAddressId);
+            $countryId             = (string) $basketDeliveryAddress->countryId()->val();
+        }
+
+        // if basket don't have delivery set, use basket user active address country id
+        if (!$countryId) {
+            $countryId = $this->customerInfrastructure->getUserActiveCountryId(
+                (string) $basket->getUserId()->val()
+            );
+        }
+
+        return $countryId;
     }
 
     /**

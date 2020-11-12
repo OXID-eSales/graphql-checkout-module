@@ -35,10 +35,19 @@ final class PlaceOrderCest extends PlaceOrderBaseCest
         $result  = $this->placeOrder($I, $basketId);
         $orderId = $result['data']['placeOrder']['id'];
 
+        //check the basket costs
+        $basketCosts = $this->queryBasketCost($I, $basketId);
+        $I->assertEquals(59.8, $basketCosts['productGross']['sum']);
+        $I->assertEquals(7.5, $basketCosts['payment']['price']);
+        $I->assertEquals(3.9, $basketCosts['delivery']['price']);
+        $I->assertEquals(0, $basketCosts['voucher']);
+        $I->assertEquals(0, $basketCosts['discount']);
+        $I->assertEquals(71.2, $basketCosts['total']);
+
         //check order history
         $orders = $this->getOrderFromOrderHistory($I);
-        $I->assertEquals($orders['id'], $orderId);
-        $I->assertEquals($orders['cost']['total'], 63.7);
+        $I->assertEquals($orderId, $orders['id']);
+        $I->assertEquals($basketCosts['total'], $orders['cost']['total']);
         $I->assertNotEmpty($orders['invoiceAddress']);
         $I->assertNull($orders['deliveryAddress']);
 
@@ -59,14 +68,23 @@ final class PlaceOrderCest extends PlaceOrderBaseCest
         $this->setBasketDeliveryMethod($I, $basketId, self::TEST_SHIPPING);
         $this->setBasketPaymentMethod($I, $basketId, self::PAYMENT_TEST);
 
+        //check the basket costs
+        $basketCosts = $this->queryBasketCost($I, $basketId);
+        $I->assertEquals(59.8, $basketCosts['productGross']['sum']);
+        $I->assertEquals(7.77, $basketCosts['payment']['price']);
+        $I->assertEquals(6.66, $basketCosts['delivery']['price']);
+        $I->assertEquals(0, $basketCosts['voucher']);
+        $I->assertEquals(0, $basketCosts['discount']);
+        $I->assertEquals(74.23, $basketCosts['total']);
+
         //place the order
         $result  = $this->placeOrder($I, $basketId);
         $orderId = $result['data']['placeOrder']['id'];
 
         //check order history
         $orders = $this->getOrderFromOrderHistory($I);
-        $I->assertEquals($orders['id'], $orderId);
-        $I->assertEquals($orders['cost']['total'], 66.46);
+        $I->assertEquals($orderId, $orders['id']);
+        $I->assertEquals($basketCosts['total'], $orders['cost']['total']);
         $I->assertNotEmpty($orders['invoiceAddress']);
         $I->assertNull($orders['deliveryAddress']);
 
@@ -92,7 +110,7 @@ final class PlaceOrderCest extends PlaceOrderBaseCest
 
         //check order history
         $orders = $this->getOrderFromOrderHistory($I);
-        $I->assertEquals($orders['id'], $orderId);
+        $I->assertEquals($orderId, $orders['id']);
         $I->assertNotEmpty($orders['invoiceAddress']);
         $I->assertNotEmpty($orders['deliveryAddress']);
 
@@ -154,7 +172,7 @@ final class PlaceOrderCest extends PlaceOrderBaseCest
         $this->setBasketPaymentMethod($I, $basketId, self::PAYMENT_STANDARD);
 
         //place the order
-        $result = $this->placeOrder($I, $basketId, HttpCode::BAD_REQUEST);
+        $this->placeOrder($I, $basketId, HttpCode::BAD_REQUEST);
 
         //remove basket
         $this->removeBasket($I, $basketId, self::USERNAME);
@@ -216,7 +234,7 @@ final class PlaceOrderCest extends PlaceOrderBaseCest
         $I->updateInDatabase('oxuserbaskets', ['oegql_paymentid' => self::PAYMENT_TEST], ['oxid' => $basketId]);
 
         //place the order
-        $result = $this->placeOrder($I, $basketId, HttpCode::BAD_REQUEST);
+        $this->placeOrder($I, $basketId, HttpCode::BAD_REQUEST);
 
         //remove basket
         $this->removeBasket($I, $basketId, self::USERNAME);
@@ -237,29 +255,72 @@ final class PlaceOrderCest extends PlaceOrderBaseCest
         $this->setBasketPaymentMethod($I, $basketId, self::PAYMENT_STANDARD);
         $this->addVoucherToBasket($I, $basketId, 'voucher1');
 
+        //check the basket costs
+        $basketCosts = $this->queryBasketCost($I, $basketId);
+        $I->assertEquals(29.9, $basketCosts['productGross']['sum']);
+        $I->assertEquals(7.5, $basketCosts['payment']['price']);
+        $I->assertEquals(3.9, $basketCosts['delivery']['price']);
+        $I->assertEquals(5, $basketCosts['voucher']);
+        $I->assertEquals(5, $basketCosts['discount']); //this is sum of all discounts, including vouchers
+        $I->assertEquals(36.3, $basketCosts['total']);
+
         //place the order
         $result  = $this->placeOrder($I, $basketId);
         $orderId = $result['data']['placeOrder']['id'];
 
         //check order history
         $orders = $this->getOrderFromOrderHistory($I);
-        $I->assertEquals($orders['id'], $orderId);
+        $I->assertEquals($orderId, $orders['id']);
+        $I->assertEquals($basketCosts['total'], $orders['cost']['total']);
+        $I->assertEquals($basketCosts['voucher'], $orders['cost']['voucher']);
         $I->assertEquals($orders['vouchers'][0]['id'], 'voucher1id');
         $I->assertNotEmpty($orders['invoiceAddress']);
         $I->assertNull($orders['deliveryAddress']);
-        $I->assertNull($orders['deliveryAddress']);
-
-        //OXVOUCHERDISCOUNT ?
-
-        //todo check if discount was applied ?
 
         //remove basket
         $this->removeBasket($I, $basketId, self::USERNAME);
     }
 
-    public function placeOrderWithDiscounts(): void
+    public function placeOrderWithDiscountedProduct(AcceptanceTester $I): void
     {
-        //TODO
+        $I->wantToTest('placing an order with a discounted product');
+        $I->login(self::USERNAME, self::PASSWORD);
+
+        // get 10% off from 200 EUR product value on
+        $I->updateInDatabase('oxdiscount', ['oxactive' => 0]);
+        $I->updateInDatabase('oxdiscount', ['oxactive' => 1], ['oxid' => self::DISCOUNT_ID]);
+
+        //prepare basket
+        $basketId = $this->createBasket($I, 'cart_with_discount');
+        $this->addProductToBasket($I, $basketId, self::DISCOUNT_PRODUCT, 1);
+        $this->setBasketDeliveryMethod($I, $basketId, self::SHIPPING_STANDARD);
+        $this->setBasketPaymentMethod($I, $basketId, self::PAYMENT_STANDARD);
+
+        //check the basket costs
+        $basketCosts = $this->queryBasketCost($I, $basketId);
+        $I->assertEquals(479.0, $basketCosts['productGross']['sum']);
+        $I->assertEquals(7.5, $basketCosts['payment']['price']);
+        $I->assertEquals(0.0, $basketCosts['delivery']['price']);
+        $I->assertEquals(0.0, $basketCosts['voucher']);
+        $I->assertEquals(47.9, $basketCosts['discount']); //this is sum of all discounts, including vouchers
+        $I->assertEquals(438.6, $basketCosts['total']);
+
+        //place the order
+        $result  = $this->placeOrder($I, $basketId);
+        $orderId = $result['data']['placeOrder']['id'];
+
+        //check order history
+        $orders = $this->getOrderFromOrderHistory($I);
+        $I->assertEquals($orderId, $orders['id']);
+        $I->assertEquals($basketCosts['total'], $orders['cost']['total']);
+        $I->assertEquals($basketCosts['discount'], $orders['cost']['discount']);
+        $I->assertEquals($basketCosts['voucher'], $orders['cost']['voucher']);
+
+        //remove basket
+        $this->removeBasket($I, $basketId, self::USERNAME);
+
+        $I->updateInDatabase('oxdiscount', ['oxactive' => 0]);
+        $I->updateInDatabase('oxdiscount', ['oxactive' => 1], ['oxid' => self::DEFAULT_DISCOUNT_ID]);
     }
 
     public function placeOrderAndNoCalculateDelCostIfNotLoggedIn(AcceptanceTester $I): void
@@ -275,14 +336,23 @@ final class PlaceOrderCest extends PlaceOrderBaseCest
         $this->setBasketDeliveryMethod($I, $basketId, self::SHIPPING_STANDARD);
         $this->setBasketPaymentMethod($I, $basketId, self::PAYMENT_STANDARD);
 
+        //check the basket costs
+        $basketCosts = $this->queryBasketCost($I, $basketId);
+        $I->assertEquals(59.8, $basketCosts['productGross']['sum']);
+        $I->assertEquals(7.5, $basketCosts['payment']['price']);
+        $I->assertEquals(3.9, $basketCosts['delivery']['price']);
+        $I->assertEquals(0, $basketCosts['voucher']);
+        $I->assertEquals(0, $basketCosts['discount']);
+        $I->assertEquals(71.2, $basketCosts['total']);
+
         //place the order
         $result  = $this->placeOrder($I, $basketId);
         $orderId = $result['data']['placeOrder']['id'];
 
         //check order history
         $orders = $this->getOrderFromOrderHistory($I);
-        $I->assertEquals($orders['id'], $orderId);
-        $I->assertEquals($orders['cost']['total'], 63.7);
+        $I->assertEquals($orderId, $orders['id']);
+        $I->assertEquals($basketCosts['total'], $orders['cost']['total']);
 
         //remove basket
         $this->removeBasket($I, $basketId, self::USERNAME);
@@ -304,6 +374,16 @@ final class PlaceOrderCest extends PlaceOrderBaseCest
         $this->setBasketDeliveryMethod($I, $basketId, self::SHIPPING_STANDARD);
         $this->setBasketPaymentMethod($I, $basketId, self::PAYMENT_STANDARD);
 
+        //check the basket costs
+        //NOTE: usually you won't use cash on delivery with downloads but shop allows it also in standard checkout
+        $basketCosts = $this->queryBasketCost($I, $basketId);
+        $I->assertEquals(0, $basketCosts['productGross']['sum']);
+        $I->assertEquals(7.5, $basketCosts['payment']['price']);
+        $I->assertEquals(0, $basketCosts['delivery']['price']);
+        $I->assertEquals(0, $basketCosts['voucher']);
+        $I->assertEquals(0, $basketCosts['discount']);
+        $I->assertEquals(7.5, $basketCosts['total']);
+
         //place the order
         $result  = $this->placeOrder($I, $basketId);
         $orderId = $result['data']['placeOrder']['id'];
@@ -311,7 +391,7 @@ final class PlaceOrderCest extends PlaceOrderBaseCest
         //check order history
         $orders = $this->getOrderFromOrderHistory($I);
         $I->assertEquals($orders['id'], $orderId);
-        $I->assertEquals($orders['cost']['total'], 0);
+        $I->assertEquals($orders['cost']['total'], $basketCosts['total']);
 
         //remove basket
         $this->removeBasket($I, $basketId, self::USERNAME);

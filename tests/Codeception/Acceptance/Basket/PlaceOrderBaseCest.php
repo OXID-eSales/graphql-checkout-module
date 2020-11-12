@@ -44,6 +44,12 @@ abstract class PlaceOrderBaseCest extends BaseCest
 
     protected const DOWNLOADABLE_FILE = 'oiaa81b5e002fc2f73b9398c361c0b97';
 
+    protected const DISCOUNT_PRODUCT = '058de8224773a1d5fd54d523f0c823e0';
+
+    protected const DISCOUNT_ID = '9fc3e801da9cdd0b2.74513077';
+
+    protected const DEFAULT_DISCOUNT_ID = ' 4e542e4e8dd127836.0028845';
+
     public function _before(AcceptanceTester $I, Scenario $scenario): void
     {
         parent::_before($I, $scenario);
@@ -225,6 +231,8 @@ abstract class PlaceOrderBaseCest extends BaseCest
                         updated
                         cost {
                             total
+                            voucher
+                            discount
                         }
                         vouchers {
                             id
@@ -412,5 +420,37 @@ abstract class PlaceOrderBaseCest extends BaseCest
                 ]
             );
         }
+    }
+
+    protected function queryBasketCost(AcceptanceTester $I, string $basketId): array
+    {
+        $variables = [
+            'basketId'  => $basketId,
+        ];
+
+        $query = '
+            query ($basketId: String!){
+                basket (id: $basketId) {
+                   cost {
+                       productGross {
+                           sum
+                       }
+                       payment {
+                          price
+                       }
+                       delivery {
+                          price
+                       }
+                       voucher
+                       discount
+                       total
+                   }
+                }
+            }
+        ';
+
+        $result = $this->getGQLResponse($I, $query, $variables);
+
+        return $result['data']['basket']['cost'];
     }
 }

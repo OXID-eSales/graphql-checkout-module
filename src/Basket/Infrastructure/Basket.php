@@ -179,8 +179,6 @@ final class Basket
 
         /** @var EshopBasketModel $basketModel */
         $basketModel = $this->accountBasketInfrastructure->getBasket($userBasketModel, $userModel);
-        $basketModel->setPayment($userBasketModel->getFieldData('oegql_paymentid'));
-        $basketModel->setShipping($userBasketModel->getFieldData('oegql_shippingid'));
 
         /** @var OrderModel $orderModel */
         $orderModel = oxNew(OrderModel::class);

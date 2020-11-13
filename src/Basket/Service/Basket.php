@@ -18,13 +18,16 @@ use OxidEsales\GraphQL\Account\Basket\Exception\BasketAccessForbidden;
 use OxidEsales\GraphQL\Account\Basket\Exception\BasketNotFound;
 use OxidEsales\GraphQL\Account\Basket\Service\Basket as AccountBasketService;
 use OxidEsales\GraphQL\Account\Country\Service\Country as CountryService;
+use OxidEsales\GraphQL\Account\Customer\DataType\Customer as CustomerDataType;
 use OxidEsales\GraphQL\Account\Customer\Infrastructure\Customer as CustomerInfrastructure;
 use OxidEsales\GraphQL\Account\Customer\Service\Customer as CustomerService;
+use OxidEsales\GraphQL\Account\Order\DataType\Order as OrderDataType;
 use OxidEsales\GraphQL\Account\Payment\DataType\Payment as PaymentDataType;
 use OxidEsales\GraphQL\Base\Exception\InvalidToken;
 use OxidEsales\GraphQL\Base\Service\Authentication;
 use OxidEsales\GraphQL\Base\Service\Authorization;
 use OxidEsales\GraphQL\Catalogue\Shared\Infrastructure\Repository as Repository;
+use OxidEsales\GraphQL\Checkout\Basket\Exception\PlaceOrder;
 use OxidEsales\GraphQL\Checkout\Basket\Infrastructure\Basket as BasketInfrastructure;
 use OxidEsales\GraphQL\Checkout\DeliveryMethod\DataType\DeliveryMethod as DeliveryMethodDataType;
 use OxidEsales\GraphQL\Checkout\DeliveryMethod\Exception\UnavailableDeliveryMethod;
@@ -61,6 +64,9 @@ final class Basket
     /** @var DeliveryAddressService */
     private $deliveryAddressService;
 
+    /** @var BasketRelationService */
+    private $basketRelationService;
+
     public function __construct(
         Repository $repository,
         Authentication $authenticationService,
@@ -70,17 +76,19 @@ final class Basket
         AccountBasketService $accountBasketService,
         CustomerInfrastructure $customerInfrastructure,
         CountryService $countryService,
-        CustomerService $customerService
+        CustomerService $customerService,
+        BasketRelationService $basketRelationService
     ) {
-        $this->repository               = $repository;
-        $this->authenticationService    = $authenticationService;
-        $this->authorizationService     = $authorizationService;
-        $this->basketInfrastructure     = $basketInfrastructure;
-        $this->accountBasketService     = $accountBasketService;
-        $this->customerInfrastructure   = $customerInfrastructure;
-        $this->countryService           = $countryService;
-        $this->customerService          = $customerService;
-        $this->deliveryAddressService   = $deliveryAddressService;
+        $this->repository             = $repository;
+        $this->authenticationService  = $authenticationService;
+        $this->authorizationService   = $authorizationService;
+        $this->basketInfrastructure   = $basketInfrastructure;
+        $this->accountBasketService   = $accountBasketService;
+        $this->customerInfrastructure = $customerInfrastructure;
+        $this->countryService         = $countryService;
+        $this->customerService        = $customerService;
+        $this->deliveryAddressService = $deliveryAddressService;
+        $this->basketRelationService  = $basketRelationService;
     }
 
     /**
@@ -91,7 +99,7 @@ final class Basket
      */
     public function setDeliveryAddress(string $basketId, string $deliveryAddressId): BasketDataType
     {
-        $basket = $this->getBasketById(new ID($basketId));
+        $basket = $this->accountBasketService->getAuthenticatedCustomerBasket($basketId);
 
         if (!$this->deliveryAddressBelongsToUser($deliveryAddressId)) {
             throw DeliveryAddressNotFound::byId($deliveryAddressId);
@@ -132,7 +140,7 @@ final class Basket
      */
     public function isPaymentMethodAvailableForBasket(ID $basketId, ID $paymentId): bool
     {
-        $basket           = $this->getBasketById($basketId);
+        $basket           = $this->accountBasketService->getAuthenticatedCustomerBasket((string) $basketId->val());
         $deliveryMethodId = $basket->getEshopModel()->getFieldData('oegql_deliverymethodid');
 
         if (!$deliveryMethodId) {
@@ -159,7 +167,7 @@ final class Basket
      */
     public function setPaymentIdBasket(ID $basketId, ID $paymentId): BasketDataType
     {
-        $basket = $this->getBasketById($basketId);
+        $basket = $this->accountBasketService->getAuthenticatedCustomerBasket((string) $basketId->val());
 
         $this->basketInfrastructure->setPayment($basket, (string) $paymentId->val());
 
@@ -171,7 +179,7 @@ final class Basket
      */
     public function isDeliveryMethodAvailableForBasket(ID $basketId, ID $deliveryMethodId): bool
     {
-        $basket    = $this->getBasketById($basketId);
+        $basket    = $this->accountBasketService->getAuthenticatedCustomerBasket((string) $basketId->val());
         $customer  = $this->customerService->customer((string) $basket->getUserId()->val());
         $countryId = $this->getBasketDeliveryCountryId($basket);
         $country   = $this->countryService->country($countryId);
@@ -191,7 +199,7 @@ final class Basket
      */
     public function setDeliveryMethodIdToBasket(ID $basketId, ID $deliveryId): BasketDataType
     {
-        $basket = $this->getBasketById($basketId);
+        $basket = $this->accountBasketService->getAuthenticatedCustomerBasket((string) $basketId->val());
 
         $this->basketInfrastructure->setDeliveryMethod($basket, (string) $deliveryId->val());
 
@@ -203,7 +211,7 @@ final class Basket
      */
     public function getBasketDeliveryMethods(ID $basketId): array
     {
-        $basket    = $this->getBasketById($basketId);
+        $basket    = $this->accountBasketService->getAuthenticatedCustomerBasket((string) $basketId->val());
         $customer  = $this->customerService->customer((string) $basket->getUserId()->val());
         $countryId = $this->getBasketDeliveryCountryId($basket);
         $country   = $this->countryService->country($countryId);
@@ -220,7 +228,7 @@ final class Basket
      */
     public function getBasketPayments(ID $basketId): array
     {
-        $basket    = $this->getBasketById($basketId);
+        $basket    = $this->accountBasketService->getAuthenticatedCustomerBasket((string) $basketId->val());
         $customer  = $this->customerService->customer((string) $basket->getUserId()->val());
         $countryId = $this->getBasketDeliveryCountryId($basket);
         $country   = $this->countryService->country($countryId);
@@ -240,6 +248,40 @@ final class Basket
         }
 
         return array_unique($result, SORT_REGULAR);
+    }
+
+    /**
+     * @throws UnavailableDeliveryMethod
+     * @throws UnavailablePayment
+     * @throws PlaceOrder
+     */
+    public function placeOrder(ID $basketId): OrderDataType
+    {
+        /** @var CustomerDataType $customer */
+        $customer = $this->customerService->customer(
+            $this->authenticationService->getUserId()
+        );
+
+        $userBasket = $this->accountBasketService->getAuthenticatedCustomerBasket((string) $basketId->val());
+
+        /** @var DeliveryMethodDataType $deliveryMethod */
+        $deliveryMethod = $this->basketRelationService->deliveryMethod($userBasket);
+
+        /** @var PaymentDataType $payment */
+        $payment = $this->basketRelationService->payment($userBasket);
+
+        if (!$this->isDeliveryMethodAvailableForBasket($userBasket->id(), $deliveryMethod->id())) {
+            throw UnavailableDeliveryMethod::byId((string) $deliveryMethod->id()->val());
+        }
+
+        if (!$this->isPaymentMethodAvailableForBasket($userBasket->id(), $payment->getId())) {
+            throw UnavailablePayment::byId((string) $payment->getId()->val());
+        }
+
+        return $this->basketInfrastructure->placeOrder(
+            $customer,
+            $userBasket
+        );
     }
 
     private function deliveryAddressBelongsToUser(string $deliveryAddressId): bool
@@ -277,23 +319,5 @@ final class Basket
         }
 
         return $countryId;
-    }
-
-    /**
-     * @throws BasketAccessForbidden
-     * @throws BasketNotFound
-     * @throws InvalidToken
-     */
-    private function getBasketById(ID $basketId): BasketDataType
-    {
-        $basket = $this->accountBasketService->basket((string) $basketId->val());
-
-        $userId = $this->authenticationService->getUserId();
-
-        if (!$basket->belongsToUser($userId)) {
-            throw BasketAccessForbidden::byAuthenticatedUser();
-        }
-
-        return $basket;
     }
 }

@@ -266,7 +266,7 @@ final class Basket
 
         $userBasket = $this->accountBasketService->getAuthenticatedCustomerBasket((string) $basketId->val());
 
-        /** @var DeliveryMethodDataType $deliveryMethod */
+        /** @var ?DeliveryMethodDataType $deliveryMethod */
         $deliveryMethod = $this->basketRelationService->deliveryMethod($userBasket);
 
         if ($deliveryMethod === null) {
@@ -277,7 +277,7 @@ final class Basket
             throw UnavailableDeliveryMethod::byId((string) $deliveryMethod->id()->val());
         }
 
-        /** @var PaymentDataType $payment */
+        /** @var ?PaymentDataType $payment */
         $payment = $this->basketRelationService->payment($userBasket);
 
         if ($payment === null) {

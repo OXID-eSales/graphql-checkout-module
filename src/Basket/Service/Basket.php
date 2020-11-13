@@ -30,7 +30,9 @@ use OxidEsales\GraphQL\Catalogue\Shared\Infrastructure\Repository as Repository;
 use OxidEsales\GraphQL\Checkout\Basket\Exception\PlaceOrder;
 use OxidEsales\GraphQL\Checkout\Basket\Infrastructure\Basket as BasketInfrastructure;
 use OxidEsales\GraphQL\Checkout\DeliveryMethod\DataType\DeliveryMethod as DeliveryMethodDataType;
+use OxidEsales\GraphQL\Checkout\DeliveryMethod\Exception\MissingDeliveryMethod;
 use OxidEsales\GraphQL\Checkout\DeliveryMethod\Exception\UnavailableDeliveryMethod;
+use OxidEsales\GraphQL\Checkout\Payment\Exception\MissingPayment;
 use OxidEsales\GraphQL\Checkout\Payment\Exception\PaymentValidationFailed;
 use OxidEsales\GraphQL\Checkout\Payment\Exception\UnavailablePayment;
 use TheCodingMachine\GraphQLite\Types\ID;
@@ -267,11 +269,19 @@ final class Basket
         /** @var DeliveryMethodDataType $deliveryMethod */
         $deliveryMethod = $this->basketRelationService->deliveryMethod($userBasket);
 
-        /** @var PaymentDataType $payment */
-        $payment = $this->basketRelationService->payment($userBasket);
+        if ($deliveryMethod === null) {
+            throw MissingDeliveryMethod::provideDeliveryMethod();
+        }
 
         if (!$this->isDeliveryMethodAvailableForBasket($userBasket->id(), $deliveryMethod->id())) {
             throw UnavailableDeliveryMethod::byId((string) $deliveryMethod->id()->val());
+        }
+
+        /** @var PaymentDataType $payment */
+        $payment = $this->basketRelationService->payment($userBasket);
+
+        if ($payment === null) {
+            throw MissingPayment::providePayment();
         }
 
         if (!$this->isPaymentMethodAvailableForBasket($userBasket->id(), $payment->getId())) {

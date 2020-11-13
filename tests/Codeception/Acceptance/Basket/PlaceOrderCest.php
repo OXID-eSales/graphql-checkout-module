@@ -438,4 +438,33 @@ final class PlaceOrderCest extends PlaceOrderBaseCest
         //remove basket
         $this->removeBasket($I, $basketId, self::USERNAME);
     }
+
+    public function placeOrderWithoutDeliveryMethod(AcceptanceTester $I): void
+    {
+        $I->wantToTest('placing an order without selected delivery method');
+
+        $I->login(self::USERNAME, self::PASSWORD);
+
+        //prepare basket
+        $basketId = $this->createBasket($I, 'no_delivery_method');
+        $this->addProductToBasket($I, $basketId, self::PRODUCT_ID, 1);
+
+        //place the order
+        $this->placeOrder($I, $basketId, HttpCode::BAD_REQUEST);
+    }
+
+    public function placeOrderWithoutPaymentMethod(AcceptanceTester $I): void
+    {
+        $I->wantToTest('placing an order without selected payment method');
+
+        $I->login(self::USERNAME, self::PASSWORD);
+
+        //prepare basket
+        $basketId = $this->createBasket($I, 'no_payment_method');
+        $this->addProductToBasket($I, $basketId, self::PRODUCT_ID, 1);
+        $this->setBasketDeliveryMethod($I, $basketId, self::SHIPPING_STANDARD);
+
+        //place the order
+        $this->placeOrder($I, $basketId, HttpCode::BAD_REQUEST);
+    }
 }

@@ -93,7 +93,7 @@ final class Basket
      */
     public function setDeliveryAddress(string $basketId, string $deliveryAddressId): BasketDataType
     {
-        $basket = $this->getBasketById(new ID($basketId));
+        $basket = $this->accountBasketService->getAuthenticatedCustomerBasket($basketId);
 
         if (!$this->deliveryAddressBelongsToUser($deliveryAddressId)) {
             throw DeliveryAddressNotFound::byId($deliveryAddressId);
@@ -134,7 +134,7 @@ final class Basket
      */
     public function isPaymentMethodAvailableForBasket(ID $basketId, ID $paymentId): bool
     {
-        $basket           = $this->getBasketById($basketId);
+        $basket           = $this->accountBasketService->getAuthenticatedCustomerBasket((string) $basketId->val());
         $deliveryMethodId = $basket->getEshopModel()->getFieldData('oegql_deliverymethodid');
 
         if (!$deliveryMethodId) {
@@ -161,7 +161,7 @@ final class Basket
      */
     public function setPaymentIdBasket(ID $basketId, ID $paymentId): BasketDataType
     {
-        $basket = $this->getBasketById($basketId);
+        $basket = $this->accountBasketService->getAuthenticatedCustomerBasket((string) $basketId->val());
 
         $this->basketInfrastructure->setPayment($basket, (string) $paymentId->val());
 
@@ -173,7 +173,7 @@ final class Basket
      */
     public function isDeliveryMethodAvailableForBasket(ID $basketId, ID $deliveryMethodId): bool
     {
-        $basket    = $this->getBasketById($basketId);
+        $basket    = $this->accountBasketService->getAuthenticatedCustomerBasket((string) $basketId->val());
         $customer  = $this->customerService->customer((string) $basket->getUserId()->val());
         $countryId = $this->basketInfrastructure->getBasketDeliveryCountryId($basket);
         $country   = $this->countryService->country($countryId);
@@ -193,7 +193,7 @@ final class Basket
      */
     public function setDeliveryMethodIdToBasket(ID $basketId, ID $deliveryId): BasketDataType
     {
-        $basket = $this->getBasketById($basketId);
+        $basket = $this->accountBasketService->getAuthenticatedCustomerBasket((string) $basketId->val());
 
         $this->basketInfrastructure->setDeliveryMethod($basket, (string) $deliveryId->val());
 
@@ -205,7 +205,7 @@ final class Basket
      */
     public function getBasketDeliveryMethods(ID $basketId): array
     {
-        $basket    = $this->getBasketById($basketId);
+        $basket    = $this->accountBasketService->getAuthenticatedCustomerBasket((string) $basketId->val());
         $customer  = $this->customerService->customer((string) $basket->getUserId()->val());
         $countryId = $this->basketInfrastructure->getBasketDeliveryCountryId($basket);
         $country   = $this->countryService->country($countryId);
@@ -222,7 +222,7 @@ final class Basket
      */
     public function getBasketPayments(ID $basketId): array
     {
-        $basket    = $this->getBasketById($basketId);
+        $basket    = $this->accountBasketService->getAuthenticatedCustomerBasket((string) $basketId->val());
         $customer  = $this->customerService->customer((string) $basket->getUserId()->val());
         $countryId = $this->basketInfrastructure->getBasketDeliveryCountryId($basket);
         $country   = $this->countryService->country($countryId);
@@ -245,33 +245,22 @@ final class Basket
     }
 
     /**
-     * @throws BasketAccessForbidden
-     * @throws BasketNotFound
-     * @throws InvalidToken
-     */
-    public function getBasketById(ID $basketId): BasketDataType
-    {
-        $basket = $this->accountBasketService->basket((string) $basketId->val());
-
-        $userId = $this->authenticationService->getUserId();
-
-        if (!$basket->belongsToUser($userId)) {
-            throw BasketAccessForbidden::byAuthenticatedUser();
-        }
-
-        return $basket;
-    }
-
-    /**
      * @throws UnavailableDeliveryMethod
      * @throws UnavailablePayment
      * @throws PlaceOrder
      */
-    public function placeOrder(CustomerDataType $customer, BasketDataType $userBasket): OrderDataType
+    public function placeOrder(ID $basketId): OrderDataType
     {
-        $userBasket->id();
+        /** @var CustomerDataType $customer */
+        $customer = $this->customerService->customer(
+            $this->authenticationService->getUserId()
+        );
+
+        $userBasket = $this->accountBasketService->getAuthenticatedCustomerBasket((string) $basketId->val());
+
         /** @var DeliveryMethodDataType $deliveryMethod */
         $deliveryMethod = $this->basketRelationService->deliveryMethod($userBasket);
+
         /** @var PaymentDataType $payment */
         $payment = $this->basketRelationService->payment($userBasket);
 

@@ -20,11 +20,11 @@ use OxidEsales\GraphQL\Account\Basket\DataType\Basket as BasketDataType;
 use OxidEsales\GraphQL\Account\Country\DataType\Country as CountryDataType;
 use OxidEsales\GraphQL\Account\Customer\DataType\Customer as CustomerDataType;
 use OxidEsales\GraphQL\Account\Order\DataType\Order as OrderDataType;
-use OxidEsales\GraphQL\Account\Payment\DataType\Payment as PaymentDataType;
 use OxidEsales\GraphQL\Account\Shared\Infrastructure\Basket as AccountBasketInfrastructure;
 use OxidEsales\GraphQL\Catalogue\Shared\Infrastructure\Repository;
 use OxidEsales\GraphQL\Checkout\Basket\Exception\PlaceOrder as PlaceOrderException;
 use OxidEsales\GraphQL\Checkout\DeliveryMethod\DataType\DeliveryMethod as DeliveryMethodDataType;
+use OxidEsales\GraphQL\Checkout\Payment\DataType\BasketPayment;
 
 final class Basket
 {
@@ -88,8 +88,8 @@ final class Basket
         BasketDataType $userBasket,
         CountryDataType $country
     ): array {
-        $userModel   = $userBasket->getEshopModel()->getUser();
-        $basketModel = $this->accountBasketInfrastructure->getCalculatedBasket($userBasket);
+        $userModel       = $customer->getEshopModel();
+        $basketModel     = $this->accountBasketInfrastructure->getCalculatedBasket($userBasket);
 
         //Initialize available delivery set list for user and country
         /** @var EshopDeliverySetListModel $deliverySetList */
@@ -109,7 +109,7 @@ final class Basket
             $deliveryMethodPayments = [];
 
             foreach ($paymentList as $paymentModel) {
-                $deliveryMethodPayments[$paymentModel->getId()] = new PaymentDataType($paymentModel);
+                $deliveryMethodPayments[$paymentModel->getId()] = new BasketPayment($paymentModel, $basketModel);
             }
 
             if (!empty($deliveryMethodPayments)) {

@@ -32,6 +32,7 @@ use OxidEsales\GraphQL\Checkout\Basket\Infrastructure\Basket as BasketInfrastruc
 use OxidEsales\GraphQL\Checkout\DeliveryMethod\DataType\DeliveryMethod as DeliveryMethodDataType;
 use OxidEsales\GraphQL\Checkout\DeliveryMethod\Exception\MissingDeliveryMethod;
 use OxidEsales\GraphQL\Checkout\DeliveryMethod\Exception\UnavailableDeliveryMethod;
+use OxidEsales\GraphQL\Checkout\Payment\DataType\BasketPayment;
 use OxidEsales\GraphQL\Checkout\Payment\Exception\MissingPayment;
 use OxidEsales\GraphQL\Checkout\Payment\Exception\PaymentValidationFailed;
 use OxidEsales\GraphQL\Checkout\Payment\Exception\UnavailablePayment;
@@ -226,7 +227,7 @@ final class Basket
     }
 
     /**
-     * @return PaymentDataType[]
+     * @return BasketPayment[]
      */
     public function getBasketPayments(ID $basketId): array
     {

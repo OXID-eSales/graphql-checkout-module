@@ -11,9 +11,9 @@ namespace OxidEsales\GraphQL\Checkout\Basket\Controller;
 
 use OxidEsales\GraphQL\Account\Basket\DataType\Basket as BasketDataType;
 use OxidEsales\GraphQL\Account\Order\DataType\Order as OrderDataType;
-use OxidEsales\GraphQL\Account\Payment\DataType\Payment as PaymentDataType;
 use OxidEsales\GraphQL\Checkout\Basket\Service\Basket as BasketService;
 use OxidEsales\GraphQL\Checkout\DeliveryMethod\DataType\DeliveryMethod as DeliveryMethodDataType;
+use OxidEsales\GraphQL\Checkout\Payment\DataType\BasketPayment;
 use TheCodingMachine\GraphQLite\Annotations\Logged;
 use TheCodingMachine\GraphQLite\Annotations\Mutation;
 use TheCodingMachine\GraphQLite\Annotations\Query;
@@ -74,7 +74,7 @@ final class Basket
      * @Query
      * @Logged()
      *
-     * @return PaymentDataType[]
+     * @return BasketPayment[]
      */
     public function basketPayments(ID $basketId): array
     {

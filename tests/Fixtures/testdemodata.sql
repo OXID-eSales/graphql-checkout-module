@@ -10,10 +10,12 @@ REPLACE INTO `oxuserbaskets` (`OXID`, `OXUSERID`, `OXTITLE`, `OXPUBLIC`, `OEGQL_
 ('basket_otheruser', 'otheruser', 'savedbasket', true, null, null, null),
 ('basket_user_address_payment', 'e7af1c3b786fd02906ccd75698f4e6b9', 'basketPayment', true, 'oxiddebitnote', 'oxidstandard', 'address_user'),
 ('basket_user_3', 'e7af1c3b786fd02906ccd75698f4e6b9', 'basketPayment', true, null, null, null),
-('basket_payment', 'e7af1c3b786fd02906ccd75698f4e6b9', 'basketPaymentMethod', true, 'oxiddebitnote', 'oxidstandard', 'address_user');
+('basket_payment', 'e7af1c3b786fd02906ccd75698f4e6b9', 'basketPaymentMethod', true, 'oxiddebitnote', 'oxidstandard', 'address_user'),
+('basket_payment_cost', 'e7af1c3b786fd02906ccd75698f4e6b9', 'basketPaymentCost', true, 'oxidgraphql', '_deliveryset', 'address_user');
 
 REPLACE INTO `oxuserbasketitems` (`OXID`, `OXBASKETID`, `OXARTID`, `OXAMOUNT`, `OXSELLIST`, `OXPERSPARAM`) VALUES
-('_test_basket_payment_item_1', 'basket_payment', 'dc5ffdf380e15674b56dd562a7cb6aec', 1, 'N;', '');
+('_test_basket_payment_item_1', 'basket_payment', 'dc5ffdf380e15674b56dd562a7cb6aec', 1, 'N;', ''),
+('_test_basket_payment_cost_item_1', 'basket_payment_cost', 'f4f2d8eee51b0fd5eb60a46dff1166d8', 2, 'N;', '');
 
 REPLACE INTO `oxpayments` (`OXID`, `OXACTIVE`, `OXDESC`, `OXADDSUM`, `OXADDSUMTYPE`, `OXADDSUMRULES`, `OXFROMBONI`, `OXFROMAMOUNT`, `OXTOAMOUNT`, `OXVALDESC`, `OXCHECKED`, `OXDESC_1`, `OXVALDESC_1`, `OXDESC_2`, `OXVALDESC_2`, `OXDESC_3`, `OXVALDESC_3`, `OXLONGDESC`, `OXLONGDESC_1`, `OXLONGDESC_2`, `OXLONGDESC_3`, `OXSORT`) VALUES
 ('oxidgraphql', 1, 'GraphQL', 7.77, 'abs', 0, 0, 0, 1000000, '', 1, 'GraphQL (coconuts)', '', '', '', '', '', '', '', '', '', 700);
@@ -48,7 +50,8 @@ REPLACE INTO `oxvoucherseries` (`OXID`, `OXSERIENR`, `OXDISCOUNT`, `OXDISCOUNTTY
 ('product_voucher', 'productVoucher', 5.0, 'absolute', '2000-01-01', '2050-12-31', 'product voucher', 0),
 ('category_voucher', 'categoryVoucher', 5.0, 'absolute', '2000-01-01', '2050-12-31', 'category voucher', 0),
 ('user_voucher', 'userVoucher', 5.0, 'absolute', '2000-01-01', '2050-12-31', 'user voucher', 0),
-('minvalue_voucher', 'minvalueVoucher', 5.0, 'absolute', '2000-01-01', '2050-12-31', 'min value voucher', 0);
+('minvalue_voucher', 'minvalueVoucher', 5.0, 'absolute', '2000-01-01', '2050-12-31', 'min value voucher', 0),
+('basket_payment_cost_voucher', 1, 'basket_payment_cost_voucher', 10.0, 'absolute', '2000-01-01', '2050-12-31', 'basket payment cost voucher', 0);
 
 REPLACE INTO `oxvouchers` (`OXDATEUSED`, `OXORDERID`, `OXUSERID`, `OXRESERVED`, `OXVOUCHERNR`, `OXVOUCHERSERIEID`, `OXDISCOUNT`, `OXID`, `OXTIMESTAMP`, `OEGQL_BASKETID`) VALUES
 (null, '', '', 0, 'voucher1', 'voucherserie1', 5, 'voucher1id', now(), ''),
@@ -56,5 +59,6 @@ REPLACE INTO `oxvouchers` (`OXDATEUSED`, `OXORDERID`, `OXUSERID`, `OXRESERVED`, 
 (null, '', '', 0, 'productVoucher', 'product_voucher', 0, 'product_voucher_1', now(), null),
 (null, '', '', 0, 'categoryVoucher', 'category_voucher', 0, 'category_voucher_1', now(), null),
 (null, '', '', 0, 'userVoucher', 'user_voucher', 0, 'user_voucher_1', now(), null),
-(null, '', '', 0, 'minvalueVoucher', 'minvalue_voucher', 0, 'minvalue_voucher_1', now(), null);
+(null, '', '', 0, 'minvalueVoucher', 'minvalue_voucher', 0, 'minvalue_voucher_1', now(), null),
+('2020-10-10',	'',	'',	0,	'basket_payment_cost_voucher',	'basket_payment_cost_voucher',	10.00,	'basket_payment_cost_voucher_1',	'2020-11-16 11:26:01',	'basket_payment_cost');
 

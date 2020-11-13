@@ -10,8 +10,8 @@ declare(strict_types=1);
 namespace OxidEsales\GraphQL\Checkout\DeliveryMethod\DataType;
 
 use OxidEsales\Eshop\Application\Model\DeliverySet as EshopDeliverySetModel;
-use OxidEsales\GraphQL\Account\Payment\DataType\Payment as PaymentDataType;
 use OxidEsales\GraphQL\Catalogue\Shared\DataType\DataType;
+use OxidEsales\GraphQL\Checkout\Payment\DataType\BasketPayment as BasketPaymentDataType;
 use TheCodingMachine\GraphQLite\Annotations\Field;
 use TheCodingMachine\GraphQLite\Annotations\Type;
 use TheCodingMachine\GraphQLite\Types\ID;
@@ -24,15 +24,15 @@ final class DeliveryMethod implements DataType
     /** @var EshopDeliverySetModel */
     private $deliverySetModel;
 
-    /** @var PaymentDataType[] */
-    private $paymentTypes;
+    /** @var BasketPaymentDataType[] */
+    private $basketPaymentTypes;
 
     public function __construct(
         EshopDeliverySetModel $deliverySetModel,
-        array $paymentTypes = []
+        array $basketPaymentTypes = []
     ) {
-        $this->deliverySetModel = $deliverySetModel;
-        $this->paymentTypes     = $paymentTypes;
+        $this->deliverySetModel       = $deliverySetModel;
+        $this->basketPaymentTypes     = $basketPaymentTypes;
     }
 
     public function getEshopModel(): EshopDeliverySetModel
@@ -61,11 +61,11 @@ final class DeliveryMethod implements DataType
     /**
      * @Field()
      *
-     * @return PaymentDataType[]
+     * @return BasketPaymentDataType[]
      */
     public function getPaymentTypes(): array
     {
-        return $this->paymentTypes;
+        return $this->basketPaymentTypes;
     }
 
     /**

@@ -177,6 +177,8 @@ final class BasketSetDeliveryMethodMutationCest extends BaseCest
                 }
             }
         ');
+
+        $I->seeResponseCodeIs(HttpCode::OK);
     }
 
     private function basketRemove($I): void

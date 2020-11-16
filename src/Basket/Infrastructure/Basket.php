@@ -88,9 +88,8 @@ final class Basket
         BasketDataType $userBasket,
         CountryDataType $country
     ): array {
-        $userModel       = $customer->getEshopModel();
-        $userBasketModel = $userBasket->getEshopModel();
-        $basketModel     = $this->accountBasketInfrastructure->getBasket($userBasketModel, $userModel);
+        $userModel   = $userBasket->getEshopModel()->getUser();
+        $basketModel = $this->accountBasketInfrastructure->getCalculatedBasket($userBasket);
 
         //Initialize available delivery set list for user and country
         /** @var EshopDeliverySetListModel $deliverySetList */
@@ -149,7 +148,7 @@ final class Basket
         }
 
         /** @var EshopBasketModel $basketModel */
-        $basketModel = $this->accountBasketInfrastructure->getBasket($userBasketModel, $userModel);
+        $basketModel = $this->accountBasketInfrastructure->getCalculatedBasket($userBasket);
 
         /** @var OrderModel $orderModel */
         $orderModel = oxNew(OrderModel::class);

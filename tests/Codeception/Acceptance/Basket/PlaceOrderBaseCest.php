@@ -350,16 +350,16 @@ abstract class PlaceOrderBaseCest extends BaseCest
         $I->assertSame($deliveryAddressId, $result['data']['basketSetDeliveryAddress']['deliveryAddress']['id']);
     }
 
-    protected function addVoucherToBasket(AcceptanceTester $I, string $basketId, string $voucher): void
+    protected function addVoucherToBasket(AcceptanceTester $I, string $basketId, string $voucherNumber): void
     {
         $variables = [
-            'basketId' => $basketId,
-            'voucher'  => $voucher,
+            'basketId'      => $basketId,
+            'voucherNumber' => $voucherNumber,
         ];
 
         $mutation = '
-            mutation ($basketId: String!, $voucher: String!){
-                basketAddVoucher(basketId: $basketId, voucher: $voucher){
+            mutation ($basketId: String!, $voucherNumber: String!){
+                basketAddVoucher(basketId: $basketId, voucherNumber: $voucherNumber){
                     vouchers {
                         number
                     }
@@ -368,7 +368,7 @@ abstract class PlaceOrderBaseCest extends BaseCest
         ';
         $result = $this->getGQLResponse($I, $mutation, $variables);
 
-        $I->assertSame($voucher, $result['data']['basketAddVoucher']['vouchers'][0]['number']);
+        $I->assertSame($voucherNumber, $result['data']['basketAddVoucher']['vouchers'][0]['number']);
     }
 
     protected function createVoucher(AcceptanceTester $I): void

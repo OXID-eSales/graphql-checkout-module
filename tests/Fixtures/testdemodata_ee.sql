@@ -61,3 +61,27 @@ REPLACE INTO `oxconfig` (`OXID`, `OXSHOPID`, `OXVARNAME`, `OXVARTYPE`, `OXVARVAL
 SELECT MD5(RAND()), 2, oxvarname, oxvartype, oxvarvalue, oxmodule FROM oxconfig
 WHERE oxshopid = '1'
   AND oxvarname IN ( 'aLanguages');
+
+REPLACE INTO `oxvoucherseries` (`OXID`, `OXMAPID`, `OXSHOPID`, `OXSERIENR`, `OXDISCOUNT`, `OXDISCOUNTTYPE`, `OXBEGINDATE`, `OXENDDATE`, `OXSERIEDESCRIPTION`, `OXALLOWOTHERSERIES`) VALUES
+('voucherserie1', 9765, 1, 'voucherserie1', 5.0, 'absolute', '2000-01-01', '2050-12-31', '', 1),
+('personal_voucher', 9764, 1, 'myVoucher', 5.0, 'absolute', '2000-01-01', '2050-12-31', 'personal voucher', 0),
+('product_voucher', 9763, 1, 'productVoucher', 5.0, 'absolute', '2000-01-01', '2050-12-31', 'product voucher', 0),
+('category_voucher', 9762, 1, 'categoryVoucher', 5.0, 'absolute', '2000-01-01', '2050-12-31', 'category voucher', 0),
+('user_voucher', 9761, 1, 'userVoucher', 5.0, 'absolute', '2000-01-01', '2050-12-31', 'user voucher', 0),
+('minvalue_voucher', 9760, 1, 'minvalueVoucher', 5.0, 'absolute', '2000-01-01', '2050-12-31', 'min value voucher', 0);
+
+REPLACE INTO `oxvouchers` (`OXDATEUSED`, `OXORDERID`, `OXUSERID`, `OXRESERVED`, `OXVOUCHERNR`, `OXVOUCHERSERIEID`, `OXDISCOUNT`, `OXID`, `OXTIMESTAMP`, `OEGQL_BASKETID`) VALUES
+(null, '', '', 0, 'voucher1', 'voucherserie1', 5, 'voucher1id', now(), ''),
+(null, '', '', 0, 'myVoucher', 'personal_voucher', 0, 'personal_voucher_1', now(), null),
+(null, '', '', 0, 'productVoucher', 'product_voucher', 0, 'product_voucher_1', now(), null),
+(null, '', '', 0, 'categoryVoucher', 'category_voucher', 0, 'category_voucher_1', now(), null),
+(null, '', '', 0, 'userVoucher', 'user_voucher', 0, 'user_voucher_1', now(), null),
+(null, '', '', 0, 'minvalueVoucher', 'minvalue_voucher', 0, 'minvalue_voucher_1', now(), null);
+
+REPLACE INTO `oxvoucherseries2shop` (`OXSHOPID`, `OXMAPOBJECTID`) VALUES
+(1, 9765),
+(1, 9764),
+(1, 9763),
+(1, 9762),
+(1, 9761),
+(1, 9760);

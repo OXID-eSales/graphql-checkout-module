@@ -11,7 +11,6 @@ namespace OxidEsales\GraphQL\Checkout\Tests\Codeception\Acceptance\Basket;
 
 use Codeception\Scenario;
 use Codeception\Util\HttpCode;
-use OxidEsales\Facts\Facts;
 use OxidEsales\GraphQL\Checkout\Tests\Codeception\Acceptance\BaseCest;
 use OxidEsales\GraphQL\Checkout\Tests\Codeception\AcceptanceTester;
 use TheCodingMachine\GraphQLite\Types\ID;
@@ -20,6 +19,8 @@ abstract class PlaceOrderBaseCest extends BaseCest
 {
     protected const USERNAME = 'user@oxid-esales.com';
 
+    protected const USER_OXID = 'e7af1c3b786fd02906ccd75698f4e6b9';
+
     protected const CHECKOUT_USERNAME = 'checkoutuser@oxid-esales.com';
 
     protected const OTHER_USERNAME = 'otheruser@oxid-esales.com';
@@ -27,6 +28,8 @@ abstract class PlaceOrderBaseCest extends BaseCest
     protected const PASSWORD = 'useruser';
 
     protected const PRODUCT_ID = 'dc5ffdf380e15674b56dd562a7cb6aec';
+
+    protected const CATEGORY_ID = 'fad4d7e2b47d87bb6a2773d93d4ae9be'; //category id for PRODUCT_ID
 
     protected const SHIPPING_STANDARD = 'oxidstandard';
 
@@ -56,6 +59,7 @@ abstract class PlaceOrderBaseCest extends BaseCest
 
         $I->updateConfigInDatabase('blPerfNoBasketSaving', false, 'bool');
         $I->updateConfigInDatabase('blCalculateDelCostIfNotLoggedIn', false, 'bool');
+        $I->updateConfigInDatabase('iVoucherTimeout', 10800, 'int'); // matches default value
     }
 
     protected function getGQLResponse(
@@ -369,57 +373,6 @@ abstract class PlaceOrderBaseCest extends BaseCest
         $result = $this->getGQLResponse($I, $mutation, $variables);
 
         $I->assertSame($voucherNumber, $result['data']['basketAddVoucher']['vouchers'][0]['number']);
-    }
-
-    protected function createVoucher(AcceptanceTester $I): void
-    {
-        $I->haveInDatabase(
-            'oxvoucherseries',
-            [
-                'OXID'               => 'voucherserie1',
-                'OXSERIENR'          => 'voucherserie1',
-                'OXDISCOUNT'         => 5,
-                'OXDISCOUNTTYPE'     => 'absolute',
-                'OXBEGINDATE'        => '2000-01-01',
-                'OXENDDATE'          => '2050-12-31',
-                'OXSERIEDESCRIPTION' => '',
-                'OXALLOWOTHERSERIES' => 1,
-            ]
-        );
-        $I->haveInDatabase(
-            'oxvouchers',
-            [
-                'OXDATEUSED'       => null,
-                'OXORDERID'        => '',
-                'OXUSERID'         => '',
-                'OXRESERVED'       => 0,
-                'OXVOUCHERNR'      => 'voucher1',
-                'OXVOUCHERSERIEID' => 'voucherserie1',
-                'OXDISCOUNT'       => 5,
-                'OXID'             => 'voucher1id',
-                'OXTIMESTAMP'      => date('Y-m-d', strtotime('-1 day')),
-                'OEGQL_BASKETID'   => 'null',
-            ]
-        );
-
-        $facts = new Facts();
-
-        if ($facts->isEnterprise()) {
-            $I->haveInDatabase(
-                'oxvoucherseries2shop',
-                [
-                    'OXSHOPID'      => 1,
-                    'OXMAPOBJECTID' => 1,
-                ]
-            );
-            $I->haveInDatabase(
-                'oxvoucherseries2shop',
-                [
-                    'OXSHOPID'      => 1,
-                    'OXMAPOBJECTID' => 2,
-                ]
-            );
-        }
     }
 
     protected function queryBasketCost(AcceptanceTester $I, string $basketId): array

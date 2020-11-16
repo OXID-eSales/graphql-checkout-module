@@ -240,47 +240,6 @@ final class PlaceOrderCest extends PlaceOrderBaseCest
         $this->removeBasket($I, $basketId, self::USERNAME);
     }
 
-    public function placeOrderWithVouchers(AcceptanceTester $I): void
-    {
-        $I->wantToTest('placing an order with vouchers');
-        $I->login(self::USERNAME, self::PASSWORD);
-
-        // add voucherSeries and voucher to database
-        $this->createVoucher($I);
-
-        //prepare basket
-        $basketId = $this->createBasket($I, 'cart_with_voucher');
-        $this->addProductToBasket($I, $basketId, self::PRODUCT_ID, 1);
-        $this->setBasketDeliveryMethod($I, $basketId, self::SHIPPING_STANDARD);
-        $this->setBasketPaymentMethod($I, $basketId, self::PAYMENT_STANDARD);
-        $this->addVoucherToBasket($I, $basketId, 'voucher1');
-
-        //check the basket costs
-        $basketCosts = $this->queryBasketCost($I, $basketId);
-        $I->assertEquals(29.9, $basketCosts['productGross']['sum']);
-        $I->assertEquals(7.5, $basketCosts['payment']['price']);
-        $I->assertEquals(3.9, $basketCosts['delivery']['price']);
-        $I->assertEquals(5, $basketCosts['voucher']);
-        $I->assertEquals(5, $basketCosts['discount']); //this is sum of all discounts, including vouchers
-        $I->assertEquals(36.3, $basketCosts['total']);
-
-        //place the order
-        $result  = $this->placeOrder($I, $basketId);
-        $orderId = $result['data']['placeOrder']['id'];
-
-        //check order history
-        $orders = $this->getOrderFromOrderHistory($I);
-        $I->assertEquals($orderId, $orders['id']);
-        $I->assertEquals($basketCosts['total'], $orders['cost']['total']);
-        $I->assertEquals($basketCosts['voucher'], $orders['cost']['voucher']);
-        $I->assertEquals($orders['vouchers'][0]['id'], 'voucher1id');
-        $I->assertNotEmpty($orders['invoiceAddress']);
-        $I->assertNull($orders['deliveryAddress']);
-
-        //remove basket
-        $this->removeBasket($I, $basketId, self::USERNAME);
-    }
-
     public function placeOrderWithDiscountedProduct(AcceptanceTester $I): void
     {
         $I->wantToTest('placing an order with a discounted product');
@@ -416,6 +375,7 @@ final class PlaceOrderCest extends PlaceOrderBaseCest
 
         //remove basket
         $this->removeBasket($I, $basketId, self::USERNAME);
+        $I->updateConfigInDatabase('iMinOrderPrice', '0', 'str');
     }
 
     public function placeOrderOnOutOfStockNotBuyableProduct(AcceptanceTester $I): void
@@ -437,6 +397,7 @@ final class PlaceOrderCest extends PlaceOrderBaseCest
 
         //remove basket
         $this->removeBasket($I, $basketId, self::USERNAME);
+        $I->updateInDatabase('oxarticles', ['oxstock' => '15', 'oxstockflag' => '1'], ['oxid' => self::PRODUCT_ID]);
     }
 
     public function placeOrderWithoutDeliveryMethod(AcceptanceTester $I): void

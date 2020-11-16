@@ -99,10 +99,10 @@ final class Basket
         $result = [];
         /** @var EshopDeliverySetModel $deliverySet */
         foreach ($deliverySetListArray as $setKey => $deliverySet) {
-            /** @phpstan-ignore-next-line */
             [$allMethods, $activeShipSet, $paymentList] = $deliverySetList->getDeliverySetData(
                 $setKey,
                 $userModel,
+                /** @phpstan-ignore-next-line */
                 $basketModel
             );
 

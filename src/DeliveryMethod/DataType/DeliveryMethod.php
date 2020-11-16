@@ -18,8 +18,9 @@ use TheCodingMachine\GraphQLite\Types\ID;
 
 /**
  * @Type()
+ * @extendable-dataType
  */
-final class DeliveryMethod implements DataType
+class DeliveryMethod implements DataType
 {
     /** @var EshopDeliverySetModel */
     private $deliverySetModel;

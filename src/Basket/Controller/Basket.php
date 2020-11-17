@@ -85,8 +85,8 @@ final class Basket
      * @Mutation()
      * @Logged()
      */
-    public function placeOrder(ID $basketId): OrderDataType
+    public function placeOrder(ID $basketId, string $paypalToken, string $paypalPayerId): OrderDataType
     {
-        return $this->basketService->placeOrder($basketId);
+        return $this->basketService->placeOrder($basketId, $paypalToken, $paypalPayerId);
     }
 }

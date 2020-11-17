@@ -16,6 +16,7 @@ use OxidEsales\Eshop\Application\Model\DeliverySetList as EshopDeliverySetListMo
 use OxidEsales\Eshop\Application\Model\Order as OrderModel;
 use OxidEsales\Eshop\Application\Model\User as EshopUserModel;
 use OxidEsales\Eshop\Application\Model\UserBasket as EshopUserBasketModel;
+use OxidEsales\Eshop\Core\Registry as EshopRegistry;
 use OxidEsales\GraphQL\Account\Basket\DataType\Basket as BasketDataType;
 use OxidEsales\GraphQL\Account\Country\DataType\Country as CountryDataType;
 use OxidEsales\GraphQL\Account\Customer\DataType\Customer as CustomerDataType;
@@ -122,7 +123,9 @@ final class Basket
 
     public function placeOrder(
         CustomerDataType $customer,
-        BasketDataType $userBasket
+        BasketDataType $userBasket,
+        string $paypalToken,
+        string $paypalPayerId
     ): OrderDataType {
 
         /** @var EshopUserModel $userModel */
@@ -149,6 +152,13 @@ final class Basket
 
         /** @var EshopBasketModel $basketModel */
         $basketModel = $this->accountBasketInfrastructure->getCalculatedBasket($userBasket);
+
+        // In order to be able to finalize order, using PayPal as payment method,
+        // we need to prepare the following session variables.
+        $session = EshopRegistry::getSession(); // TODO: Get session from base legacy infrastructure
+        $session->setBasket($basketModel);
+        $session->setVariable('oepaypal-token', $paypalToken);
+        $session->setVariable('oepaypal-payerId', $paypalPayerId);
 
         /** @var OrderModel $orderModel */
         $orderModel = oxNew(OrderModel::class);

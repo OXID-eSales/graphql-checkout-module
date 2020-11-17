@@ -257,7 +257,7 @@ final class Basket
      * @throws UnavailablePayment
      * @throws PlaceOrder
      */
-    public function placeOrder(ID $basketId): OrderDataType
+    public function placeOrder(ID $basketId, string $paypalToken, string $paypalPayerId): OrderDataType
     {
         /** @var CustomerDataType $customer */
         $customer = $this->customerService->customer(
@@ -290,7 +290,9 @@ final class Basket
 
         return $this->basketInfrastructure->placeOrder(
             $customer,
-            $userBasket
+            $userBasket,
+            $paypalToken,
+            $paypalPayerId
         );
     }
 

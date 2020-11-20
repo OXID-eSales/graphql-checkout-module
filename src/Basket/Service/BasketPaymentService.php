@@ -32,11 +32,11 @@ final class BasketPaymentService
     /**
      * @Field()
      */
-    public function cost(BasketPayment $payment): Price
+    public function cost(BasketPayment $basketPayment): Price
     {
         return $this->paymentInfrastructure->getPaymentCost(
-            $payment,
-            $payment->getBasketModel()
+            $basketPayment,
+            $basketPayment->getBasketModel()
         );
     }
 }

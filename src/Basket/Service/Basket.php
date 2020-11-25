@@ -174,7 +174,7 @@ final class Basket
     /**
      * Updates payment id for the user basket
      */
-    public function setPaymentIdBasket(ID $basketId, ID $paymentId, string $additionalData = ''): BasketDataType
+    public function setPaymentIdBasket(ID $basketId, ID $paymentId, string $additionalData = 'YTowOnt9'): BasketDataType
     {
         $basket = $this->accountBasketService->getAuthenticatedCustomerBasket((string) $basketId->val());
 

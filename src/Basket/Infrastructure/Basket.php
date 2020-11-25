@@ -81,7 +81,7 @@ final class Basket
         /** @var EshopBasketModel $basketModel */
         $basketModel = $this->accountBasketInfrastructure->getCalculatedBasket($userBasket);
 
-        $addInfo = unserialize($additionalInfo);
+        $addInfo = @unserialize(base64_decode($additionalInfo));
         $addInfo = is_array($addInfo) ?: [];
         EshopRegistry::getSession()->setVariable('dynvalue', $addInfo);
         EshopRegistry::getSession()->setVariable('paymentid', $paymentId);
@@ -176,6 +176,11 @@ final class Basket
             throw PlaceOrderException::emptyBasket((string) $userBasket->id());
         }
 
+        //put dynvalues into session if we have some stored
+        $addInfo = @unserialize(base64_decode($userBasketModel->getFieldData('OEGQL_PAYMENTDYNDATA')));
+        EshopRegistry::getSession()->setVariable('dynvalue', $addInfo);
+        $_POST['dynvalue'] = $addInfo;
+
         $_POST['sDeliveryAddressMD5'] = $userModel->getEncodedDeliveryAddress();
 
         //set delivery address to basket if any is given
@@ -199,7 +204,7 @@ final class Basket
         if ($status === $orderModel::ORDER_STATE_OK || $status === $orderModel::ORDER_STATE_MAILINGERROR) {
             $basketModel->deleteBasket();
         } else {
-            throw PlaceOrderException::byBasketId($userBasketModel->getId(), (int) $status);
+            throw PlaceOrderException::byBasketId($userBasketModel->getId(), (string) $status);
         }
 
         //return order data type

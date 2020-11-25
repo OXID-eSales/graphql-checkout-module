@@ -51,6 +51,8 @@ final class Basket
     /**
      * @Mutation()
      * @Logged()
+     *
+     * Additional info is some base64_encoded serialized array that will be used as dyndata.
      */
     public function basketSetDeliveryMethod(ID $basketId, ID $deliveryMethodId): BasketDataType
     {

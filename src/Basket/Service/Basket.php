@@ -117,13 +117,13 @@ final class Basket
      * @throws PaymentValidationFailed
      * @throws UnavailablePayment
      */
-    public function setPayment(ID $basketId, ID $paymentId): BasketDataType
+    public function setPayment(ID $basketId, ID $paymentId, string $additionalInfo = ''): BasketDataType
     {
-        if (!$this->isPaymentMethodAvailableForBasket($basketId, $paymentId)) {
+        if (!$this->isPaymentMethodAvailableForBasket($basketId, $paymentId, $additionalInfo)) {
             throw UnavailablePayment::byId((string) $paymentId->val());
         }
 
-        return $this->setPaymentIdBasket($basketId, $paymentId);
+        return $this->setPaymentIdBasket($basketId, $paymentId, $additionalInfo);
     }
 
     /**
@@ -141,7 +141,7 @@ final class Basket
     /**
      * Check if payment method is available for user basket with concrete id
      */
-    public function isPaymentMethodAvailableForBasket(ID $basketId, ID $paymentId): bool
+    public function isPaymentMethodAvailableForBasket(ID $basketId, ID $paymentId, string $additonalInfo = ''): bool
     {
         $basket           = $this->accountBasketService->getAuthenticatedCustomerBasket((string) $basketId->val());
         $deliveryMethodId = $basket->getEshopModel()->getFieldData('oegql_deliverymethodid');
@@ -162,17 +162,23 @@ final class Basket
 
         $paymentMethods = isset($deliveries[$deliveryMethodId]) ? $deliveries[$deliveryMethodId]->getPaymentTypes() : [];
 
-        return array_key_exists((string) $paymentId->val(), $paymentMethods);
+        $result = array_key_exists((string) $paymentId->val(), $paymentMethods);
+
+        if ($result) {
+            $result = $this->basketInfrastructure->validatePaymentForBasket($basket, (string) $paymentId->val(), $additonalInfo);
+        }
+
+        return $result;
     }
 
     /**
      * Updates payment id for the user basket
      */
-    public function setPaymentIdBasket(ID $basketId, ID $paymentId): BasketDataType
+    public function setPaymentIdBasket(ID $basketId, ID $paymentId, string $additionalData = ''): BasketDataType
     {
         $basket = $this->accountBasketService->getAuthenticatedCustomerBasket((string) $basketId->val());
 
-        $this->basketInfrastructure->setPayment($basket, (string) $paymentId->val());
+        $this->basketInfrastructure->setPayment($basket, (string) $paymentId->val(), $additionalData);
 
         return $basket;
     }

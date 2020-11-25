@@ -31,6 +31,7 @@ $aModule = [
     'url'         => 'www.oxid-esales.com',
     'email'       => 'info@oxid-esales.com',
     'extend'      => [
+         \OxidEsales\Eshop\Application\Controller\PaymentController::class => \OxidEsales\GraphQL\Checkout\Shared\Shop\PaymentControllerHack::class
     ],
     'controllers' => [
     ],

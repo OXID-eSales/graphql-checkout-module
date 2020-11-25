@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace OxidEsales\GraphQL\Checkout\Basket\Infrastructure;
 
 use Exception;
+use OxidEsales\Eshop\Application\Controller\PaymentController as EshopPaymentController;
 use OxidEsales\Eshop\Application\Model\Address as EshopAddressModel;
 use OxidEsales\Eshop\Application\Model\Basket as EshopBasketModel;
 use OxidEsales\Eshop\Application\Model\DeliverySet as EshopDeliverySetModel;
@@ -17,6 +18,7 @@ use OxidEsales\Eshop\Application\Model\DeliverySetList as EshopDeliverySetListMo
 use OxidEsales\Eshop\Application\Model\Order as OrderModel;
 use OxidEsales\Eshop\Application\Model\User as EshopUserModel;
 use OxidEsales\Eshop\Application\Model\UserBasket as EshopUserBasketModel;
+use OxidEsales\Eshop\Core\Registry as EshopRegistry;
 use OxidEsales\GraphQL\Account\Basket\DataType\Basket as BasketDataType;
 use OxidEsales\GraphQL\Account\Country\DataType\Country as CountryDataType;
 use OxidEsales\GraphQL\Account\Customer\DataType\Customer as CustomerDataType;
@@ -60,15 +62,39 @@ final class Basket
         return $this->repository->saveModel($model);
     }
 
-    public function setPayment(BasketDataType $basket, string $paymentId): bool
+    public function setPayment(BasketDataType $basket, string $paymentId, string $additionalInfo = ''): bool
     {
         $model = $basket->getEshopModel();
 
         $model->assign([
-            'OEGQL_PAYMENTID' => $paymentId,
+            'OEGQL_PAYMENTID'      => $paymentId,
+            'OEGQL_PAYMENTDYNDATA' => $additionalInfo,
         ]);
 
         return $this->repository->saveModel($model);
+    }
+
+    public function validatePaymentForBasket(BasketDataType $userBasket, string $paymentId, string $additionalInfo): bool
+    {
+        $result = 'order';
+
+        /** @var EshopBasketModel $basketModel */
+        $basketModel = $this->accountBasketInfrastructure->getCalculatedBasket($userBasket);
+
+        $addInfo = unserialize($additionalInfo);
+        $addInfo = is_array($addInfo) ?: [];
+        EshopRegistry::getSession()->setVariable('dynvalue', $addInfo);
+        EshopRegistry::getSession()->setVariable('paymentid', $paymentId);
+        EshopRegistry::getSession()->setVariable('usr', $basketModel->getUser()->getId());
+        EshopRegistry::getSession()->setUser($basketModel->getUser());
+
+        $controller = oxNew(EshopPaymentController::class);
+
+        if (method_exists($controller, 'fcpoPaymentActive')) {
+            $result = (string) $controller->validatePaymentForGraphql($paymentId);
+        }
+
+        return (bool) ('order' == $result);
     }
 
     /**
@@ -96,6 +122,8 @@ final class Basket
         CountryDataType $country
     ): array {
         $userModel       = $customer->getEshopModel();
+        EshopRegistry::getSession()->setUser($userModel);
+        EshopRegistry::getSession()->setVariable('usr', $userModel->getId());
         $basketModel     = $this->accountBasketInfrastructure->getCalculatedBasket($userBasket);
 
         //Initialize available delivery set list for user and country

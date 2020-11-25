@@ -43,9 +43,9 @@ final class Basket
      * @Mutation()
      * @Logged()
      */
-    public function basketSetPayment(ID $basketId, ID $paymentId): BasketDataType
+    public function basketSetPayment(ID $basketId, ID $paymentId, string $additionalInfo = ''): BasketDataType
     {
-        return $this->basketService->setPayment($basketId, $paymentId);
+        return $this->basketService->setPayment($basketId, $paymentId, $additionalInfo);
     }
 
     /**

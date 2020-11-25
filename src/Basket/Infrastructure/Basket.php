@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace OxidEsales\GraphQL\Checkout\Basket\Infrastructure;
 
+use Exception;
 use OxidEsales\Eshop\Application\Model\Address as EshopAddressModel;
 use OxidEsales\Eshop\Application\Model\Basket as EshopBasketModel;
 use OxidEsales\Eshop\Application\Model\DeliverySet as EshopDeliverySetModel;
@@ -21,6 +22,7 @@ use OxidEsales\GraphQL\Account\Country\DataType\Country as CountryDataType;
 use OxidEsales\GraphQL\Account\Customer\DataType\Customer as CustomerDataType;
 use OxidEsales\GraphQL\Account\Order\DataType\Order as OrderDataType;
 use OxidEsales\GraphQL\Account\Shared\Infrastructure\Basket as AccountBasketInfrastructure;
+use OxidEsales\GraphQL\Base\Infrastructure\Legacy as LegacyService;
 use OxidEsales\GraphQL\Catalogue\Shared\Infrastructure\Repository;
 use OxidEsales\GraphQL\Checkout\Basket\Exception\PlaceOrder as PlaceOrderException;
 use OxidEsales\GraphQL\Checkout\DeliveryMethod\DataType\DeliveryMethod as DeliveryMethodDataType;
@@ -34,12 +36,17 @@ final class Basket
     /** @var AccountBasketInfrastructure */
     private $accountBasketInfrastructure;
 
+    /** @var LegacyService */
+    private $legacyService;
+
     public function __construct(
         Repository $repository,
-        AccountBasketInfrastructure $accountBasketInfrastructure
+        AccountBasketInfrastructure $accountBasketInfrastructure,
+        LegacyService $legacyService
     ) {
         $this->repository                  = $repository;
         $this->accountBasketInfrastructure = $accountBasketInfrastructure;
+        $this->legacyService               = $legacyService;
     }
 
     public function setDeliveryAddress(BasketDataType $basket, string $deliveryAddressId): bool
@@ -97,6 +104,10 @@ final class Basket
         $deliverySetListArray = $deliverySetList->getDeliverySetList($userModel, (string) $country->getId());
 
         $result = [];
+
+        $this->userBoniCheck($userModel);
+        $forbiddenPaymentIds = $this->getForbiddenPaymentsList($userModel);
+
         /** @var EshopDeliverySetModel $deliverySet */
         foreach ($deliverySetListArray as $setKey => $deliverySet) {
             [$allMethods, $activeShipSet, $paymentList] = $deliverySetList->getDeliverySetData(
@@ -109,7 +120,9 @@ final class Basket
             $deliveryMethodPayments = [];
 
             foreach ($paymentList as $paymentModel) {
-                $deliveryMethodPayments[$paymentModel->getId()] = new BasketPayment($paymentModel, $basketModel);
+                if (!in_array($paymentModel->getId(), $forbiddenPaymentIds)) {
+                    $deliveryMethodPayments[$paymentModel->getId()] = new BasketPayment($paymentModel, $basketModel);
+                }
             }
 
             if (!empty($deliveryMethodPayments)) {
@@ -163,5 +176,37 @@ final class Basket
 
         //return order data type
         return new OrderDataType($orderModel);
+    }
+
+    /**
+     * @throws Exception
+     */
+    private function userBoniCheck(EshopUserModel $userModel): void
+    {
+        $canContinue = true;
+
+        if (method_exists($userModel, 'checkAddressAndScore')) {
+            if ('after' != $this->legacyService->getConfigParam('sFCPOBonicheckMoment')) {
+                $canContinue = $userModel->checkAddressAndScore();
+            } else {
+                $canContinue = $userModel->checkAddressAndScore(true, false);
+            }
+        }
+
+        if (!$canContinue) {
+            throw new Exception('Cannot continue, stopped by bonicheck.');
+        }
+    }
+
+    private function getForbiddenPaymentsList(EshopUserModel $userModel): array
+    {
+        $forbiddenPaymentIds = [];
+
+        //finetuning as to when the boni score is checked can be implemented later
+        if (method_exists($userModel, 'fcpoGetForbiddenPaymentIds')) {
+            $forbiddenPaymentIds = $userModel->fcpoGetForbiddenPaymentIds();
+        }
+
+        return $forbiddenPaymentIds;
     }
 }

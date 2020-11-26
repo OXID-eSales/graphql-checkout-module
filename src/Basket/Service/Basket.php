@@ -301,6 +301,20 @@ final class Basket
         );
     }
 
+    public function paypalExpress(string $productId):  BasketDataType
+    {
+        return $this->basketInfrastructure->paypalExpress(
+            $productId
+        );
+    }
+
+    public function paypalExpressCheckout(ID $basketId): string
+    {
+        $this->basketInfrastructure->createPayPalExpressUser($basketId);
+
+        return 'gave it a try';
+    }
+
     private function deliveryAddressBelongsToUser(string $deliveryAddressId): bool
     {
         $belongs           = false;

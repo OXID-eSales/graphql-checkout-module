@@ -91,4 +91,22 @@ final class Basket
     {
         return $this->basketService->placeOrder($basketId);
     }
+
+    /**
+     * @Mutation()
+     */
+    public function PayPalExpress(string $productId): BasketDataType
+    {
+        return $this->basketService->paypalExpress($productId);
+    }
+
+    /**
+     * @Mutation()
+     *
+     * TODO: as we are not logged in at this time, verify against PP token and payerid
+     */
+    public function placePayPalOrder(ID $basketId): string
+    {
+        return $this->basketService->paypalExpressCheckout($basketId);
+    }
 }

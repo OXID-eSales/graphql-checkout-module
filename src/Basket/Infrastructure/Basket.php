@@ -16,6 +16,7 @@ use OxidEsales\Eshop\Application\Model\DeliverySetList as EshopDeliverySetListMo
 use OxidEsales\Eshop\Application\Model\Order as OrderModel;
 use OxidEsales\Eshop\Application\Model\User as EshopUserModel;
 use OxidEsales\Eshop\Application\Model\UserBasket as EshopUserBasketModel;
+use OxidEsales\Eshop\Core\Registry;
 use OxidEsales\GraphQL\Account\Basket\DataType\Basket as BasketDataType;
 use OxidEsales\GraphQL\Account\Country\DataType\Country as CountryDataType;
 use OxidEsales\GraphQL\Account\Customer\DataType\Customer as CustomerDataType;
@@ -88,7 +89,10 @@ final class Basket
         BasketDataType $userBasket,
         CountryDataType $country
     ): array {
-        $userModel   = $userBasket->getEshopModel()->getUser();
+//        $userModel   = $userBasket->getEshopModel()->getUser();
+        $userModel   = $customer->getEshopModel();
+        Registry::getSession()->setUser($userModel);
+        Registry::getSession()->setVariable('usr', $userModel->getId());
         $basketModel = $this->accountBasketInfrastructure->getCalculatedBasket($userBasket);
 
         //Initialize available delivery set list for user and country
@@ -146,6 +150,7 @@ final class Basket
             $deliveryAdress->load($userModel->getSelectedAddressId());
             $_POST['sDeliveryAddressMD5'] .= $deliveryAdress->getEncodedDeliveryAddress();
         }
+        Registry::getSession()->setVariable('sDelAddrMD5', $_POST['sDeliveryAddressMD5']);
 
         /** @var EshopBasketModel $basketModel */
         $basketModel = $this->accountBasketInfrastructure->getCalculatedBasket($userBasket);

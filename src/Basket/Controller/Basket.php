@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace OxidEsales\GraphQL\Checkout\Basket\Controller;
 
+use OxidEsales\Eshop\Core\Registry as EshopRegistry;
 use OxidEsales\GraphQL\Account\Basket\DataType\Basket as BasketDataType;
 use OxidEsales\GraphQL\Account\Order\DataType\Order as OrderDataType;
 use OxidEsales\GraphQL\Account\Payment\DataType\Payment as PaymentDataType;
@@ -85,8 +86,13 @@ final class Basket
      * @Mutation()
      * @Logged()
      */
-    public function placeOrder(ID $basketId): OrderDataType
+    public function placeOrder(ID $basketId, string $authToken): OrderDataType
     {
+        $_POST['sAuthToken'] = $authToken;
+        EshopRegistry::getSession()->setVariable('sAuthToken', $authToken);
+        $dt = new \DateTime();
+        EshopRegistry::getSession()->setVariable('sTokenTimeStamp', $dt->getTimestamp());
+
         return $this->basketService->placeOrder($basketId);
     }
 }

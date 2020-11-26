@@ -17,6 +17,7 @@ use OxidEsales\GraphQL\Account\Basket\DataType\Basket as BasketDataType;
 use OxidEsales\GraphQL\Account\Basket\Exception\BasketAccessForbidden;
 use OxidEsales\GraphQL\Account\Basket\Exception\BasketNotFound;
 use OxidEsales\GraphQL\Account\Basket\Service\Basket as AccountBasketService;
+use OxidEsales\GraphQL\Account\Country\DataType\Country as CountryDataType;
 use OxidEsales\GraphQL\Account\Country\Service\Country as CountryService;
 use OxidEsales\GraphQL\Account\Customer\DataType\Customer as CustomerDataType;
 use OxidEsales\GraphQL\Account\Customer\Infrastructure\Customer as CustomerInfrastructure;
@@ -149,9 +150,8 @@ final class Basket
             throw PaymentValidationFailed::byDeliveryMethod();
         }
 
-        $customer  = $this->customerService->customer((string) $basket->getUserId()->val());
-        $countryId = $this->getBasketDeliveryCountryId($basket);
-        $country   = $this->countryService->country($countryId);
+        $customer = $this->customerService->customer((string) $basket->getUserId()->val());
+        $country  = $this->getBasketDeliveryCountry($basket);
 
         $deliveries = $this->basketInfrastructure->getBasketAvailableDeliveryMethods(
             $customer,
@@ -181,10 +181,9 @@ final class Basket
      */
     public function isDeliveryMethodAvailableForBasket(ID $basketId, ID $deliveryMethodId): bool
     {
-        $basket    = $this->accountBasketService->getAuthenticatedCustomerBasket((string) $basketId->val());
-        $customer  = $this->customerService->customer((string) $basket->getUserId()->val());
-        $countryId = $this->getBasketDeliveryCountryId($basket);
-        $country   = $this->countryService->country($countryId);
+        $basket   = $this->accountBasketService->getAuthenticatedCustomerBasket((string) $basketId->val());
+        $customer = $this->customerService->customer((string) $basket->getUserId()->val());
+        $country  = $this->getBasketDeliveryCountry($basket);
 
         $deliveries = $this->basketInfrastructure->getBasketAvailableDeliveryMethods(
             $customer,
@@ -213,10 +212,9 @@ final class Basket
      */
     public function getBasketDeliveryMethods(ID $basketId): array
     {
-        $basket    = $this->accountBasketService->getAuthenticatedCustomerBasket((string) $basketId->val());
-        $customer  = $this->customerService->customer((string) $basket->getUserId()->val());
-        $countryId = $this->getBasketDeliveryCountryId($basket);
-        $country   = $this->countryService->country($countryId);
+        $basket   = $this->accountBasketService->getAuthenticatedCustomerBasket((string) $basketId->val());
+        $customer = $this->customerService->customer((string) $basket->getUserId()->val());
+        $country  = $this->getBasketDeliveryCountry($basket);
 
         return $this->basketInfrastructure->getBasketAvailableDeliveryMethods(
             $customer,
@@ -230,10 +228,9 @@ final class Basket
      */
     public function getBasketPayments(ID $basketId): array
     {
-        $basket    = $this->accountBasketService->getAuthenticatedCustomerBasket((string) $basketId->val());
-        $customer  = $this->customerService->customer((string) $basket->getUserId()->val());
-        $countryId = $this->getBasketDeliveryCountryId($basket);
-        $country   = $this->countryService->country($countryId);
+        $basket   = $this->accountBasketService->getAuthenticatedCustomerBasket((string) $basketId->val());
+        $customer = $this->customerService->customer((string) $basket->getUserId()->val());
+        $country  = $this->getBasketDeliveryCountry($basket);
 
         $deliveries = $this->basketInfrastructure->getBasketAvailableDeliveryMethods(
             $customer,
@@ -312,7 +309,7 @@ final class Basket
         return $belongs;
     }
 
-    private function getBasketDeliveryCountryId(BasketDataType $basket): string
+    public function getBasketDeliveryCountry(BasketDataType $basket): CountryDataType
     {
         $countryId = null;
 
@@ -328,6 +325,6 @@ final class Basket
             );
         }
 
-        return $countryId;
+        return $this->countryService->country($countryId);
     }
 }

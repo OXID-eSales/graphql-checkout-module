@@ -16,7 +16,8 @@ final class NamespaceMapper implements NamespaceMapperInterface
     public function getControllerNamespaceMapping(): array
     {
         return [
-            '\\OxidEsales\\GraphQL\\Checkout\\Basket\\Controller'   => __DIR__ . '/../../Basket/Controller/',
+            '\\OxidEsales\\GraphQL\\Checkout\\Basket\\Controller'    => __DIR__ . '/../../Basket/Controller/',
+            '\\OxidEsales\\GraphQL\\Checkout\\AmazonPay\\Controller' => __DIR__ . '/../../AmazonPay/Controller/',
         ];
     }
 

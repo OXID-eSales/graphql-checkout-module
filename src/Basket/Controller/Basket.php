@@ -11,6 +11,7 @@ namespace OxidEsales\GraphQL\Checkout\Basket\Controller;
 
 use OxidEsales\GraphQL\Account\Basket\DataType\Basket as BasketDataType;
 use OxidEsales\GraphQL\Account\Order\DataType\Order as OrderDataType;
+use OxidEsales\GraphQL\Checkout\Basket\DataType\PayPalBasket as PayPalBasketDataType;
 use OxidEsales\GraphQL\Checkout\Basket\Service\Basket as BasketService;
 use OxidEsales\GraphQL\Checkout\DeliveryMethod\DataType\DeliveryMethod as DeliveryMethodDataType;
 use OxidEsales\GraphQL\Checkout\Payment\DataType\BasketPayment;
@@ -95,18 +96,18 @@ final class Basket
     /**
      * @Mutation()
      */
-    public function PayPalExpress(string $productId): BasketDataType
+    public function PayPalExpress(string $productId, int $amount): PayPalBasketDataType
     {
-        return $this->basketService->paypalExpress($productId);
+        return $this->basketService->paypalExpress($productId, $amount);
     }
 
     /**
      * @Mutation()
      *
-     * TODO: as we are not logged in at this time, verify against PP token and payerid
+     * As we are not logged in at this time, verify against PP token and payerid
      */
-    public function placePayPalOrder(ID $basketId): string
+    public function placePayPalOrder(ID $basketId, string $paypalToken, string $payerId): OrderDataType
     {
-        return $this->basketService->paypalExpressCheckout($basketId);
+        return $this->basketService->paypalExpressCheckout($basketId, $paypalToken, $payerId);
     }
 }

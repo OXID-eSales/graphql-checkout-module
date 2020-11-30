@@ -16,17 +16,18 @@ use OxidEsales\GraphQL\Account\Address\Service\DeliveryAddress as DeliveryAddres
 use OxidEsales\GraphQL\Account\Basket\DataType\Basket as BasketDataType;
 use OxidEsales\GraphQL\Account\Basket\Exception\BasketAccessForbidden;
 use OxidEsales\GraphQL\Account\Basket\Exception\BasketNotFound;
+use OxidEsales\GraphQL\Account\Basket\Infrastructure\Repository as BasketRepository;
 use OxidEsales\GraphQL\Account\Basket\Service\Basket as AccountBasketService;
 use OxidEsales\GraphQL\Account\Country\Service\Country as CountryService;
 use OxidEsales\GraphQL\Account\Customer\DataType\Customer as CustomerDataType;
 use OxidEsales\GraphQL\Account\Customer\Infrastructure\Customer as CustomerInfrastructure;
 use OxidEsales\GraphQL\Account\Customer\Service\Customer as CustomerService;
 use OxidEsales\GraphQL\Account\Order\DataType\Order as OrderDataType;
-use OxidEsales\GraphQL\Account\Payment\DataType\Payment as PaymentDataType;
 use OxidEsales\GraphQL\Base\Exception\InvalidToken;
 use OxidEsales\GraphQL\Base\Service\Authentication;
 use OxidEsales\GraphQL\Base\Service\Authorization;
 use OxidEsales\GraphQL\Catalogue\Shared\Infrastructure\Repository as Repository;
+use OxidEsales\GraphQL\Checkout\Basket\DataType\PayPalBasket as PayPalBasketDataType;
 use OxidEsales\GraphQL\Checkout\Basket\Exception\PlaceOrder;
 use OxidEsales\GraphQL\Checkout\Basket\Infrastructure\Basket as BasketInfrastructure;
 use OxidEsales\GraphQL\Checkout\DeliveryMethod\DataType\DeliveryMethod as DeliveryMethodDataType;
@@ -70,6 +71,9 @@ final class Basket
     /** @var BasketRelationService */
     private $basketRelationService;
 
+    /** @var BasketRepository */
+    private $basketRepository;
+
     public function __construct(
         Repository $repository,
         Authentication $authenticationService,
@@ -80,7 +84,8 @@ final class Basket
         CustomerInfrastructure $customerInfrastructure,
         CountryService $countryService,
         CustomerService $customerService,
-        BasketRelationService $basketRelationService
+        BasketRelationService $basketRelationService,
+        BasketRepository $basketRepository
     ) {
         $this->repository             = $repository;
         $this->authenticationService  = $authenticationService;
@@ -92,6 +97,7 @@ final class Basket
         $this->customerService        = $customerService;
         $this->deliveryAddressService = $deliveryAddressService;
         $this->basketRelationService  = $basketRelationService;
+        $this->basketRepository       = $basketRepository;
     }
 
     /**
@@ -301,18 +307,26 @@ final class Basket
         );
     }
 
-    public function paypalExpress(string $productId):  BasketDataType
+    public function paypalExpress(string $productId, int $amount): PayPalBasketDataType
     {
         return $this->basketInfrastructure->paypalExpress(
-            $productId
+            $productId,
+            $amount
         );
     }
 
-    public function paypalExpressCheckout(ID $basketId): string
+    public function paypalExpressCheckout(ID $basketId, string $paypalToken, string $payerId): OrderDataType
     {
-        $this->basketInfrastructure->createPayPalExpressUser($basketId);
+        /** @var BasketDataType $userBasketDataType */
+        $basketDataType = $this->basketRepository->getBasketById((string) $basketId);
 
-        return 'gave it a try';
+        //make sure user exists/is created
+        $customer = $this->basketInfrastructure->ensurePayPalExpressUser($basketDataType, $paypalToken, $payerId);
+
+        //link user basket with customer and delivery address
+        $userBasket = $this->basketInfrastructure->setUserInformationToBasket((string) $basketId, (string) $customer->getId());
+
+        return $this->basketInfrastructure->placeOrder($customer, $userBasket);
     }
 
     private function deliveryAddressBelongsToUser(string $deliveryAddressId): bool

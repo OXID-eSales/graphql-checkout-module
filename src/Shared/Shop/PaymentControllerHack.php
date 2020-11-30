@@ -9,7 +9,7 @@ declare(strict_types=1);
 
 namespace OxidEsales\GraphQL\Checkout\Shared\Shop;
 
-class PaymentControllerHack extends PaymentControllerHack_parent
+final class PaymentControllerHack extends PaymentControllerHack_parent
 {
     public function validatePaymentForGraphql(string $paymentId)
     {

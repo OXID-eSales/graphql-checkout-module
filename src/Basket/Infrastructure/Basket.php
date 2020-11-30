@@ -20,17 +20,19 @@ use OxidEsales\Eshop\Application\Model\User as EshopUserModel;
 use OxidEsales\Eshop\Application\Model\UserBasket as EshopUserBasketModel;
 use OxidEsales\Eshop\Core\Registry as EshopRegistry;
 use OxidEsales\GraphQL\Account\Basket\DataType\Basket as BasketDataType;
+use OxidEsales\GraphQL\Account\Basket\Infrastructure\Basket as AccountBasketUnsharedInfrastructure;
 use OxidEsales\GraphQL\Account\Country\DataType\Country as CountryDataType;
 use OxidEsales\GraphQL\Account\Customer\DataType\Customer as CustomerDataType;
 use OxidEsales\GraphQL\Account\Order\DataType\Order as OrderDataType;
 use OxidEsales\GraphQL\Account\Shared\Infrastructure\Basket as AccountBasketInfrastructure;
 use OxidEsales\GraphQL\Base\Infrastructure\Legacy as LegacyService;
 use OxidEsales\GraphQL\Catalogue\Shared\Infrastructure\Repository;
+use OxidEsales\GraphQL\Checkout\Basket\DataType\PayPalBasket as PayPalBasketDataType;
+use OxidEsales\GraphQL\Checkout\Basket\Exception\PayPalExpressCheckoutException;
 use OxidEsales\GraphQL\Checkout\Basket\Exception\PlaceOrder as PlaceOrderException;
+use OxidEsales\GraphQL\Checkout\Basket\Infrastructure\PayPal as PayPalInfrastructure;
 use OxidEsales\GraphQL\Checkout\DeliveryMethod\DataType\DeliveryMethod as DeliveryMethodDataType;
 use OxidEsales\GraphQL\Checkout\Payment\DataType\BasketPayment;
-use OxidEsales\GraphQL\Account\Basket\Infrastructure\Basket as AccountBasketUnsharedInfrastructure;
-use OxidEsales\GraphQL\Checkout\Basket\Infrastructure\PayPal as PayPalInfrastructure;
 
 final class Basket
 {
@@ -220,52 +222,78 @@ final class Basket
         return new OrderDataType($orderModel);
     }
 
-    public function paypalExpress(string $productId): BasketDataType
+    public function paypalExpress(string $productId, int $amount): PayPalBasketDataType
     {
-        $amount = 1; //hardcoded amount for spike
         //we create an oxuserbasket entry without name and userid
         /** @var EshopUserBasketModel $userBasketModel */
         $userBasketModel = oxNew(EshopUserBasketModel::class);
         $userBasketModel->assign(
             [
                 'OEGQL_DELIVERYMETHODID' => 'oxidstandard',
-                'OEGQL_PAYMENTID' => 'oxidpaypal'
+                'OEGQL_PAYMENTID'        => 'oxidpaypal',
             ]
         );
         $userBasketModel->save();
         $userBasket = new BasketDataType($userBasketModel);
         $this->accountBasketForPP->addProduct($userBasket, $productId, $amount);
 
-        $paypal = new PayPalInfrastructure();
+        $paypal      = new PayPalInfrastructure();
         $paypalToken = $paypal->expressCheckout($userBasket);
 
         $userBasketModel->assign(
             [
-                'OEGQL_PAYPALTOKEN' => $paypalToken
+                'OEGQL_PAYPALTOKEN' => $paypalToken,
             ]
         );
         $userBasketModel->save();
 
-        $this->createPayPalExpressUser($userBasket);
+        $url = $paypal->getPayPalCommunicationUrl($paypalToken, 'continue');
 
-        return $userBasket;
+        return new PayPalBasketDataType($userBasket, $url, $paypalToken);
     }
 
-    public function createPayPalExpressUser(string $userBasketId)
+    public function ensurePayPalExpressUser(BasketDataType $userBasket, string $paypalToken, string $payerId): CustomerDataType
     {
-        $userBasketModel = oxNew(EshopUserBasketModel::class);
-        $userBasketModel->load($userBasketId);
-        $paypalToken = $userBasketModel->getFieldData('OEGQL_PAYPALTOKEN');
+        $paypal            = new PayPalInfrastructure();
+        $payerIdFromPayPal = $paypal->getPaypalPayerId($paypalToken);
+
+        if ($payerId !== $payerIdFromPayPal) {
+            throw PayPalExpressCheckoutException::byToken($paypalToken);
+        }
+
+        $savedUserId = $userBasket->getEshopModel()->getFieldData('oxuserid');
+
+        if ($savedUserId) {
+            /** @var EshopUserModel $sessionUser */
+            $sessionUser = oxNew(EshopUserModel::class);
+            $sessionUser->load($savedUserId);
+            EshopRegistry::getSession()->setUser($sessionUser);
+            EshopRegistry::getSession()->setVariable('usr', $savedUserId);
+        }
+
+        //at this point we need that session basket, otherwise the check for basket costs will not pass
+        /** @var EshopBasketModel $basketModel */
+        $basketModel = $this->accountBasketInfrastructure->getBasket($userBasket);
+        EshopRegistry::getSession()->setBasket($basketModel);
+        EshopRegistry::getSession()->setVariable('paymentid', 'oxidpaypal'); //needed for payment gateway
+
+        /** @var EshopUserModel $user */
+        $user = $paypal->prepareCheckoutUser($paypalToken);
+
+        if (!$user) {
+            throw PayPalExpressCheckoutException::byUser($paypalToken);
+        }
+
+        return new CustomerDataType($user);
+    }
+
+    public function setUserInformationToBasket(string $basketId, string $userId): BasketDataType
+    {
+        $deliveryAddressId = (string) EshopRegistry::getSession()->getVariable('deladrid');
 
         $paypal = new PayPalInfrastructure();
-        $payerId = $paypal->getPaypalPayerId($paypalToken);
 
-        //TODO: user should have logged in into PP frontend so we need
-        // to fetch his delivery information, create a user
-        // then link that user id to the userbasket
-        // and then hopefully we have all we need to place an order
-
-
+        return $paypal->setUserInformationToBasket($basketId, $userId, $deliveryAddressId);
     }
 
     /**

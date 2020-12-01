@@ -264,17 +264,20 @@ abstract class PlaceOrderBaseCest extends BaseCest
         return $result['data']['customer']['orders'][0];
     }
 
-    protected function placeOrder(AcceptanceTester $I, string $basketId, int $status = HttpCode::OK): array
+    protected function placeOrder(AcceptanceTester $I, string $basketId, int $status = HttpCode::OK, ?bool $termsAndConditions = null): array
     {
         //now actually place the order
         $variables = [
-            'basketId' => new ID($basketId),
+            'basketId'                  => new ID($basketId),
+            'confirmTermsAndConditions' => $termsAndConditions,
         ];
+
         $mutation = '
-            mutation ($basketId: ID!) {
+            mutation ($basketId: ID!, $confirmTermsAndConditions: Boolean) {
                 placeOrder(
                     basketId: $basketId
-                    ) {
+                    confirmTermsAndConditions: $confirmTermsAndConditions
+                ) {
                     id
                     orderNumber
                 }

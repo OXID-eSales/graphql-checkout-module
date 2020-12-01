@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace OxidEsales\GraphQL\Checkout\Tests\Codeception\Acceptance\Basket;
 
 use Codeception\Util\HttpCode;
+use OxidEsales\GraphQL\Checkout\Basket\Exception\PlaceOrder;
 use OxidEsales\GraphQL\Checkout\DeliveryMethod\Exception\UnavailableDeliveryMethod;
 use OxidEsales\GraphQL\Checkout\Tests\Codeception\AcceptanceTester;
 
@@ -317,9 +318,224 @@ final class PlaceOrderCest extends PlaceOrderBaseCest
         $this->removeBasket($I, $basketId, self::USERNAME);
     }
 
-    public function placeOrderWithConfirmAGB(): void
+    /**
+     * @group agb
+     */
+    public function placeOrderWithConfirmAGB(AcceptanceTester $I): void
     {
-        //TODO: blConfirmAGB
+        $I->wantToTest('placing an order with required and confirmed ABG');
+
+        $I->updateConfigInDatabase('blConfirmAGB', true);
+        $I->login(self::USERNAME, self::PASSWORD);
+
+        //prepare basket
+        $basketId = $this->createBasket($I, 'cart_with_agb_given');
+        $this->addProductToBasket($I, $basketId, self::PRODUCT_ID, 1);
+        $this->setBasketDeliveryMethod($I, $basketId, self::SHIPPING_STANDARD);
+        $this->setBasketPaymentMethod($I, $basketId, self::PAYMENT_STANDARD);
+
+        //place the order
+        $result  = $this->placeOrder($I, $basketId, HttpCode::OK, true);
+        $orderId = $result['data']['placeOrder']['id'];
+
+        //check order history
+        $orders = $this->getOrderFromOrderHistory($I);
+        $I->assertEquals($orders['id'], $orderId);
+        $I->assertEquals($orders['cost']['total'], 41.3);
+
+        //remove basket
+        $this->removeBasket($I, $basketId, self::USERNAME);
+        $I->updateConfigInDatabase('blConfirmAGB', false);
+    }
+
+    /**
+     * @group agb
+     */
+    public function placeOrderWithConfirmAGBNotGiven(AcceptanceTester $I): void
+    {
+        $I->wantToTest('placing an order with required and not given ABG');
+
+        $I->updateConfigInDatabase('blConfirmAGB', true);
+        $I->login(self::USERNAME, self::PASSWORD);
+
+        //prepare basket with invoice address
+        $basketId = $this->createBasket($I, 'cart_without_agb_given');
+        $this->addProductToBasket($I, $basketId, self::PRODUCT_ID, 1);
+        $this->setBasketDeliveryMethod($I, $basketId, self::SHIPPING_STANDARD);
+        $this->setBasketPaymentMethod($I, $basketId, self::PAYMENT_STANDARD);
+
+        //place the order
+        $result               = $this->placeOrder($I, $basketId, HttpCode::BAD_REQUEST);
+        $actualErrorMessage   = (string) $result['errors'][0]['message'];
+        $expectedErrorMessage = PlaceOrder::notAcceptedTOS($basketId)->getMessage();
+        $I->assertEquals($expectedErrorMessage, $actualErrorMessage);
+
+        //remove basket
+        $this->removeBasket($I, $basketId, self::USERNAME);
+        $I->updateConfigInDatabase('blConfirmAGB', false);
+    }
+
+    /**
+     * @group agb
+     */
+    public function placeOrderWithConfirmAGBRefused(AcceptanceTester $I): void
+    {
+        $I->wantToTest('placing an order with required and refused ABG');
+
+        $I->updateConfigInDatabase('blConfirmAGB', true);
+        $I->login(self::USERNAME, self::PASSWORD);
+
+        //prepare basket with invoice address
+        $basketId = $this->createBasket($I, 'cart_with_agb_refused');
+        $this->addProductToBasket($I, $basketId, self::PRODUCT_ID, 1);
+        $this->setBasketDeliveryMethod($I, $basketId, self::SHIPPING_STANDARD);
+        $this->setBasketPaymentMethod($I, $basketId, self::PAYMENT_STANDARD);
+
+        //place the order
+        $result               = $this->placeOrder($I, $basketId, HttpCode::BAD_REQUEST, false);
+        $actualErrorMessage   = (string) $result['errors'][0]['message'];
+        $expectedErrorMessage = PlaceOrder::notAcceptedTOS($basketId)->getMessage();
+        $I->assertEquals($expectedErrorMessage, $actualErrorMessage);
+
+        //remove basket
+        $this->removeBasket($I, $basketId, self::USERNAME);
+        $I->updateConfigInDatabase('blConfirmAGB', false);
+    }
+
+    /**
+     * @group agb
+     */
+    public function placeOrderWithConfirmAGBNull(AcceptanceTester $I): void
+    {
+        $I->wantToTest('placing an order with required and set as null ABG');
+
+        $I->updateConfigInDatabase('blConfirmAGB', true);
+        $I->login(self::USERNAME, self::PASSWORD);
+
+        //prepare basket with invoice address
+        $basketId = $this->createBasket($I, 'cart_with_null_agb');
+        $this->addProductToBasket($I, $basketId, self::PRODUCT_ID, 1);
+        $this->setBasketDeliveryMethod($I, $basketId, self::SHIPPING_STANDARD);
+        $this->setBasketPaymentMethod($I, $basketId, self::PAYMENT_STANDARD);
+
+        //place the order
+        $result               = $this->placeOrder($I, $basketId, HttpCode::BAD_REQUEST, null);
+        $actualErrorMessage   = (string) $result['errors'][0]['message'];
+        $expectedErrorMessage = PlaceOrder::notAcceptedTOS($basketId)->getMessage();
+        $I->assertEquals($expectedErrorMessage, $actualErrorMessage);
+
+        //remove basket
+        $this->removeBasket($I, $basketId, self::USERNAME);
+        $I->updateConfigInDatabase('blConfirmAGB', false);
+    }
+
+    /**
+     * @group agb
+     */
+    public function placeOrderWithConfirmAGBNotRequiredButGiven(AcceptanceTester $I): void
+    {
+        $I->wantToTest('placing an order with not required and confirmed AGB');
+
+        $I->login(self::USERNAME, self::PASSWORD);
+
+        //prepare basket with invoice address
+        $basketId = $this->createBasket($I, 'cart_with_agb_not_required_but_given');
+        $this->addProductToBasket($I, $basketId, self::PRODUCT_ID, 1);
+        $this->setBasketDeliveryMethod($I, $basketId, self::SHIPPING_STANDARD);
+        $this->setBasketPaymentMethod($I, $basketId, self::PAYMENT_STANDARD);
+
+        //place the order
+        $result  = $this->placeOrder($I, $basketId, HttpCode::OK, true);
+        $orderId = $result['data']['placeOrder']['id'];
+
+        //check order history
+        $orders = $this->getOrderFromOrderHistory($I);
+        $I->assertEquals($orders['id'], $orderId);
+        $I->assertEquals($orders['cost']['total'], 41.3);
+
+        //remove basket
+        $this->removeBasket($I, $basketId, self::USERNAME);
+    }
+
+    /**
+     * @group agb
+     */
+    public function placeOrderWithConfirmAGBNotRequiredAndRefused(AcceptanceTester $I): void
+    {
+        $I->wantToTest('placing an order with not required and refused AGB');
+
+        $I->login(self::USERNAME, self::PASSWORD);
+
+        //prepare basket with invoice address
+        $basketId = $this->createBasket($I, 'cart_with_agb_not_required_but_refused');
+        $this->addProductToBasket($I, $basketId, self::PRODUCT_ID, 1);
+        $this->setBasketDeliveryMethod($I, $basketId, self::SHIPPING_STANDARD);
+        $this->setBasketPaymentMethod($I, $basketId, self::PAYMENT_STANDARD);
+
+        //place the order
+        $result               = $this->placeOrder($I, $basketId, HttpCode::BAD_REQUEST, false);
+        $actualErrorMessage   = (string) $result['errors'][0]['message'];
+        $expectedErrorMessage = PlaceOrder::notAcceptedTOS($basketId)->getMessage();
+        $I->assertEquals($expectedErrorMessage, $actualErrorMessage);
+
+        //remove basket
+        $this->removeBasket($I, $basketId, self::USERNAME);
+    }
+
+    /**
+     * @group agb
+     */
+    public function placeOrderWithConfirmAGBNotRequiredAndNotGiven(AcceptanceTester $I): void
+    {
+        $I->wantToTest('placing an order with not required and not given ABG');
+
+        $I->login(self::USERNAME, self::PASSWORD);
+
+        //prepare basket with invoice address
+        $basketId = $this->createBasket($I, 'cart_with_agb_not_required_and_not_given');
+        $this->addProductToBasket($I, $basketId, self::PRODUCT_ID, 1);
+        $this->setBasketDeliveryMethod($I, $basketId, self::SHIPPING_STANDARD);
+        $this->setBasketPaymentMethod($I, $basketId, self::PAYMENT_STANDARD);
+
+        //place the order
+        $result  = $this->placeOrder($I, $basketId, HttpCode::OK);
+        $orderId = $result['data']['placeOrder']['id'];
+
+        //check order history
+        $orders = $this->getOrderFromOrderHistory($I);
+        $I->assertEquals($orders['id'], $orderId);
+        $I->assertEquals($orders['cost']['total'], 41.3);
+
+        //remove basket
+        $this->removeBasket($I, $basketId, self::USERNAME);
+    }
+
+    /**
+     * @group agb
+     */
+    public function placeOrderWithConfirmAGBNotRequiredAndNull(AcceptanceTester $I): void
+    {
+        $I->wantToTest('placing an order with not required and set as null ABG');
+
+        $I->login(self::USERNAME, self::PASSWORD);
+
+        //prepare basket with invoice address
+        $basketId = $this->createBasket($I, 'cart_with_null_agb');
+        $this->addProductToBasket($I, $basketId, self::PRODUCT_ID, 1);
+        $this->setBasketDeliveryMethod($I, $basketId, self::SHIPPING_STANDARD);
+        $this->setBasketPaymentMethod($I, $basketId, self::PAYMENT_STANDARD);
+
+        //place the order
+        $result  = $this->placeOrder($I, $basketId, HttpCode::OK, null);
+        $orderId = $result['data']['placeOrder']['id'];
+
+        //check order history
+        $orders = $this->getOrderFromOrderHistory($I);
+        $I->assertEquals($orders['id'], $orderId);
+        $I->assertEquals($orders['cost']['total'], 41.3);
+
+        //remove basket
+        $this->removeBasket($I, $basketId, self::USERNAME);
     }
 
     public function placeOrderWithDownloadableProduct(AcceptanceTester $I): void

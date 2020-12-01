@@ -70,7 +70,9 @@ final class PayPal
         $user = null;
 
         if ('order' == $next) {
-            $user = EshopRegistry::getSession()->getUser();
+            $userId = EshopRegistry::getSession()->getVariable('usr');
+            $user = oxNew(EshopUserModel::class);
+            $user->load($userId);
         }
 
         return $user;

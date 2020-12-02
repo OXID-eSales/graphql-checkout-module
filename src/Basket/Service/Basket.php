@@ -29,6 +29,7 @@ use OxidEsales\GraphQL\Base\Service\Authorization;
 use OxidEsales\GraphQL\Catalogue\Shared\Infrastructure\Repository as Repository;
 use OxidEsales\GraphQL\Checkout\Basket\Exception\PlaceOrder;
 use OxidEsales\GraphQL\Checkout\Basket\Infrastructure\Basket as BasketInfrastructure;
+use OxidEsales\GraphQL\Checkout\DeliveryMethod\DataType\BasketDeliveryMethod as BasketDeliveryMethodDataType;
 use OxidEsales\GraphQL\Checkout\DeliveryMethod\DataType\DeliveryMethod as DeliveryMethodDataType;
 use OxidEsales\GraphQL\Checkout\DeliveryMethod\Exception\MissingDeliveryMethod;
 use OxidEsales\GraphQL\Checkout\DeliveryMethod\Exception\UnavailableDeliveryMethod;
@@ -210,7 +211,7 @@ final class Basket
     }
 
     /**
-     * @return DeliveryMethodDataType[]
+     * @return BasketDeliveryMethodDataType[]
      */
     public function getBasketDeliveryMethods(ID $basketId): array
     {

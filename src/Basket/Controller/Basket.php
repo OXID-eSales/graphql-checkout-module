@@ -12,7 +12,7 @@ namespace OxidEsales\GraphQL\Checkout\Basket\Controller;
 use OxidEsales\GraphQL\Account\Basket\DataType\Basket as BasketDataType;
 use OxidEsales\GraphQL\Account\Order\DataType\Order as OrderDataType;
 use OxidEsales\GraphQL\Checkout\Basket\Service\Basket as BasketService;
-use OxidEsales\GraphQL\Checkout\DeliveryMethod\DataType\DeliveryMethod as DeliveryMethodDataType;
+use OxidEsales\GraphQL\Checkout\DeliveryMethod\DataType\BasketDeliveryMethod as BasketDeliveryMethodDataType;
 use OxidEsales\GraphQL\Checkout\Payment\DataType\BasketPayment;
 use TheCodingMachine\GraphQLite\Annotations\Logged;
 use TheCodingMachine\GraphQLite\Annotations\Mutation;
@@ -61,7 +61,7 @@ final class Basket
      * @Query
      * @Logged()
      *
-     * @return DeliveryMethodDataType[]
+     * @return BasketDeliveryMethodDataType[]
      */
     public function basketDeliveryMethods(ID $basketId): array
     {

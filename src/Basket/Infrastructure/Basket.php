@@ -11,19 +11,22 @@ namespace OxidEsales\GraphQL\Checkout\Basket\Infrastructure;
 
 use OxidEsales\Eshop\Application\Model\Address as EshopAddressModel;
 use OxidEsales\Eshop\Application\Model\Basket as EshopBasketModel;
+use OxidEsales\Eshop\Application\Model\DeliveryList as EshopDeliveryListModel;
 use OxidEsales\Eshop\Application\Model\DeliverySet as EshopDeliverySetModel;
 use OxidEsales\Eshop\Application\Model\DeliverySetList as EshopDeliverySetListModel;
 use OxidEsales\Eshop\Application\Model\Order as OrderModel;
 use OxidEsales\Eshop\Application\Model\User as EshopUserModel;
 use OxidEsales\Eshop\Application\Model\UserBasket as EshopUserBasketModel;
+use OxidEsales\Eshop\Core\Registry as EshopRegistry;
 use OxidEsales\GraphQL\Account\Basket\DataType\Basket as BasketDataType;
 use OxidEsales\GraphQL\Account\Country\DataType\Country as CountryDataType;
 use OxidEsales\GraphQL\Account\Customer\DataType\Customer as CustomerDataType;
 use OxidEsales\GraphQL\Account\Order\DataType\Order as OrderDataType;
 use OxidEsales\GraphQL\Account\Shared\Infrastructure\Basket as AccountBasketInfrastructure;
+use OxidEsales\GraphQL\Catalogue\Shared\DataType\Price as PriceDataType;
 use OxidEsales\GraphQL\Catalogue\Shared\Infrastructure\Repository;
 use OxidEsales\GraphQL\Checkout\Basket\Exception\PlaceOrder as PlaceOrderException;
-use OxidEsales\GraphQL\Checkout\DeliveryMethod\DataType\DeliveryMethod as DeliveryMethodDataType;
+use OxidEsales\GraphQL\Checkout\DeliveryMethod\DataType\BasketDeliveryMethod as BasketDeliveryMethodDataType;
 use OxidEsales\GraphQL\Checkout\Payment\DataType\BasketPayment;
 
 final class Basket
@@ -81,7 +84,7 @@ final class Basket
     }
 
     /**
-     * @return DeliveryMethodDataType[]
+     * @return BasketDeliveryMethodDataType[]
      */
     public function getBasketAvailableDeliveryMethods(
         CustomerDataType $customer,
@@ -113,7 +116,7 @@ final class Basket
             }
 
             if (!empty($deliveryMethodPayments)) {
-                $result[$setKey] = new DeliveryMethodDataType($deliverySet, $deliveryMethodPayments);
+                $result[$setKey] = new BasketDeliveryMethodDataType($deliverySet, $basketModel, $deliveryMethodPayments);
             }
         }
 
@@ -163,5 +166,21 @@ final class Basket
 
         //return order data type
         return new OrderDataType($orderModel);
+    }
+
+    public function getDeliveryPrice(BasketDeliveryMethodDataType $basketDeliveryMethod): PriceDataType
+    {
+        $basketModel = $basketDeliveryMethod->getBasketModel();
+        $basketModel->setShipping($basketDeliveryMethod->getEshopModel()->getId());
+        $basketModel->onUpdate();
+        $basketModel->calculateBasket();
+
+        //Reset delivery list otherwise wrong cost will be displayed
+        /** @phpstan-ignore-next-line */
+        EshopRegistry::set(EshopDeliveryListModel::class, null);
+
+        return new PriceDataType(
+            $basketModel->getDeliveryCost()
+        );
     }
 }

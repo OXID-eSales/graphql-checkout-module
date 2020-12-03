@@ -91,8 +91,8 @@ final class Basket
         BasketDataType $userBasket,
         CountryDataType $country
     ): array {
-        $userModel       = $customer->getEshopModel();
-        $basketModel     = $this->accountBasketInfrastructure->getCalculatedBasket($userBasket);
+        $userModel   = $customer->getEshopModel();
+        $basketModel = $this->accountBasketInfrastructure->getCalculatedBasket($userBasket);
 
         //Initialize available delivery set list for user and country
         /** @var EshopDeliverySetListModel $deliverySetList */

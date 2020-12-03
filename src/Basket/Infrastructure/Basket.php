@@ -149,6 +149,7 @@ final class Basket
 
         /** @var EshopBasketModel $basketModel */
         $basketModel = $this->accountBasketInfrastructure->getCalculatedBasket($userBasket);
+        \OxidEsales\Eshop\Core\Registry::getSession()->setBasket($basketModel);
 
         /** @var OrderModel $orderModel */
         $orderModel = oxNew(OrderModel::class);
@@ -158,7 +159,7 @@ final class Basket
         if ($status === $orderModel::ORDER_STATE_OK || $status === $orderModel::ORDER_STATE_MAILINGERROR) {
             $basketModel->deleteBasket();
         } else {
-            throw PlaceOrderException::byBasketId($userBasketModel->getId(), (int) $status);
+            throw PlaceOrderException::byBasketId($userBasketModel->getId(), (string) $status);
         }
 
         //return order data type

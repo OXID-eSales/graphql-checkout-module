@@ -32,10 +32,6 @@ final class PlaceOrderCest extends PlaceOrderBaseCest
         $this->setBasketDeliveryMethod($I, $basketId, self::SHIPPING_STANDARD);
         $this->setBasketPaymentMethod($I, $basketId, self::PAYMENT_STANDARD);
 
-        //place the order
-        $result  = $this->placeOrder($I, $basketId);
-        $orderId = $result['data']['placeOrder']['id'];
-
         //check the basket costs
         $basketCosts = $this->queryBasketCost($I, $basketId);
         $I->assertEquals(59.8, $basketCosts['productGross']['sum']);
@@ -45,6 +41,10 @@ final class PlaceOrderCest extends PlaceOrderBaseCest
         $I->assertEquals(0, $basketCosts['discount']);
         $I->assertEquals(71.2, $basketCosts['total']);
 
+        //place the order
+        $result  = $this->placeOrder($I, $basketId);
+        $orderId = $result['data']['placeOrder']['id'];
+
         //check order history
         $orders = $this->getOrderFromOrderHistory($I);
         $I->assertEquals($orderId, $orders['id']);
@@ -52,8 +52,7 @@ final class PlaceOrderCest extends PlaceOrderBaseCest
         $I->assertNotEmpty($orders['invoiceAddress']);
         $I->assertNull($orders['deliveryAddress']);
 
-        //remove basket
-        $this->removeBasket($I, $basketId, self::USERNAME);
+        $this->ensureBasketDoesNotExists($I, $basketId, self::USERNAME);
     }
 
     public function placeOrderUsingInvoiceAddressAndDefaultSavedBasket(AcceptanceTester $I): void
@@ -89,8 +88,7 @@ final class PlaceOrderCest extends PlaceOrderBaseCest
         $I->assertNotEmpty($orders['invoiceAddress']);
         $I->assertNull($orders['deliveryAddress']);
 
-        //remove basket
-        $this->removeBasket($I, $basketId, self::CHECKOUT_USERNAME);
+        $this->ensureBasketDoesNotExists($I, $basketId, self::CHECKOUT_USERNAME);
     }
 
     public function placeOrderUsingDeliveryAddress(AcceptanceTester $I): void
@@ -116,7 +114,7 @@ final class PlaceOrderCest extends PlaceOrderBaseCest
         $I->assertNotEmpty($orders['deliveryAddress']);
 
         //remove basket
-        $this->removeBasket($I, $basketId, self::USERNAME);
+        $this->ensureBasketDoesNotExists($I, $basketId, self::USERNAME);
     }
 
     public function placeOrderWithoutToken(AcceptanceTester $I): void
@@ -276,8 +274,7 @@ final class PlaceOrderCest extends PlaceOrderBaseCest
         $I->assertEquals($basketCosts['discount'], $orders['cost']['discount']);
         $I->assertEquals($basketCosts['voucher'], $orders['cost']['voucher']);
 
-        //remove basket
-        $this->removeBasket($I, $basketId, self::USERNAME);
+        $this->ensureBasketDoesNotExists($I, $basketId, self::USERNAME);
 
         $I->updateInDatabase('oxdiscount', ['oxactive' => 0]);
         $I->updateInDatabase('oxdiscount', ['oxactive' => 1], ['oxid' => self::DEFAULT_DISCOUNT_ID]);
@@ -314,8 +311,7 @@ final class PlaceOrderCest extends PlaceOrderBaseCest
         $I->assertEquals($orderId, $orders['id']);
         $I->assertEquals($basketCosts['total'], $orders['cost']['total']);
 
-        //remove basket
-        $this->removeBasket($I, $basketId, self::USERNAME);
+        $this->ensureBasketDoesNotExists($I, $basketId, self::USERNAME);
     }
 
     /**
@@ -343,8 +339,7 @@ final class PlaceOrderCest extends PlaceOrderBaseCest
         $I->assertEquals($orders['id'], $orderId);
         $I->assertEquals($orders['cost']['total'], 41.3);
 
-        //remove basket
-        $this->removeBasket($I, $basketId, self::USERNAME);
+        $this->ensureBasketDoesNotExists($I, $basketId, self::USERNAME);
         $I->updateConfigInDatabase('blConfirmAGB', false);
     }
 
@@ -453,8 +448,7 @@ final class PlaceOrderCest extends PlaceOrderBaseCest
         $I->assertEquals($orders['id'], $orderId);
         $I->assertEquals($orders['cost']['total'], 41.3);
 
-        //remove basket
-        $this->removeBasket($I, $basketId, self::USERNAME);
+        $this->ensureBasketDoesNotExists($I, $basketId, self::USERNAME);
     }
 
     /**
@@ -505,9 +499,6 @@ final class PlaceOrderCest extends PlaceOrderBaseCest
         $orders = $this->getOrderFromOrderHistory($I);
         $I->assertEquals($orders['id'], $orderId);
         $I->assertEquals($orders['cost']['total'], 41.3);
-
-        //remove basket
-        $this->removeBasket($I, $basketId, self::USERNAME);
     }
 
     /**
@@ -533,9 +524,6 @@ final class PlaceOrderCest extends PlaceOrderBaseCest
         $orders = $this->getOrderFromOrderHistory($I);
         $I->assertEquals($orders['id'], $orderId);
         $I->assertEquals($orders['cost']['total'], 41.3);
-
-        //remove basket
-        $this->removeBasket($I, $basketId, self::USERNAME);
     }
 
     public function placeOrderWithDownloadableProduct(AcceptanceTester $I): void
@@ -567,9 +555,6 @@ final class PlaceOrderCest extends PlaceOrderBaseCest
         $orders = $this->getOrderFromOrderHistory($I);
         $I->assertEquals($orders['id'], $orderId);
         $I->assertEquals($orders['cost']['total'], $basketCosts['total']);
-
-        //remove basket
-        $this->removeBasket($I, $basketId, self::USERNAME);
     }
 
     public function placeOrderWithBelowMinPriceBasket(AcceptanceTester $I): void

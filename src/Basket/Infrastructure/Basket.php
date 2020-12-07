@@ -159,6 +159,7 @@ final class Basket
 
         //we need to delete the basket after order to prevent ordering it twice
         if ($status === $orderModel::ORDER_STATE_OK || $status === $orderModel::ORDER_STATE_MAILINGERROR) {
+            $userBasketModel->delete();
             $basketModel->deleteBasket();
         } else {
             throw PlaceOrderException::byBasketId($userBasketModel->getId(), (int) $status);

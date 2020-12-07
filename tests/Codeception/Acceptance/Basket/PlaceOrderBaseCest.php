@@ -287,7 +287,17 @@ abstract class PlaceOrderBaseCest extends BaseCest
         return $this->getGQLResponse($I, $mutation, $variables, $status);
     }
 
-    protected function ensureBasketDoesNotExists(AcceptanceTester $I, string $basketId, string $username): void
+    protected function ensureBasketExist(AcceptanceTester $I, string $basketId, string $username): void
+    {
+        $this->ensureBasketCode($I, $basketId, $username, HttpCode::OK);
+    }
+
+    protected function ensureBasketDoesNotExist(AcceptanceTester $I, string $basketId, string $username): void
+    {
+        $this->ensureBasketCode($I, $basketId, $username, HttpCode::NOT_FOUND);
+    }
+
+    private function ensureBasketCode(AcceptanceTester $I, string $basketId, string $username, int $code): void
     {
         $I->login($username, self::PASSWORD);
 
@@ -302,7 +312,7 @@ abstract class PlaceOrderBaseCest extends BaseCest
         }';
 
         $I->sendGQLQuery($query, $variables);
-        $I->seeResponseCodeIs(HttpCode::NOT_FOUND);
+        $I->seeResponseCodeIs($code);
     }
 
     protected function removeBasket(AcceptanceTester $I, string $basketId, string $username): void

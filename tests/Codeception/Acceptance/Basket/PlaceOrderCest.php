@@ -52,7 +52,7 @@ final class PlaceOrderCest extends PlaceOrderBaseCest
         $I->assertNotEmpty($orders['invoiceAddress']);
         $I->assertNull($orders['deliveryAddress']);
 
-        $this->ensureBasketDoesNotExists($I, $basketId, self::USERNAME);
+        $this->ensureBasketDoesNotExist($I, $basketId, self::USERNAME);
     }
 
     public function placeOrderUsingInvoiceAddressAndDefaultSavedBasket(AcceptanceTester $I): void
@@ -88,7 +88,34 @@ final class PlaceOrderCest extends PlaceOrderBaseCest
         $I->assertNotEmpty($orders['invoiceAddress']);
         $I->assertNull($orders['deliveryAddress']);
 
-        $this->ensureBasketDoesNotExists($I, $basketId, self::CHECKOUT_USERNAME);
+        $this->ensureBasketDoesNotExist($I, $basketId, self::CHECKOUT_USERNAME);
+    }
+
+    public function placeOrderRemovesCorrectBasket(AcceptanceTester $I): void
+    {
+        $I->wantToTest('savedbasket(default basket) should not be removed on other basket order');
+
+        $I->login(self::CHECKOUT_USERNAME, self::PASSWORD);
+
+        //prepare default basket
+        $defaultBasketId = $this->createBasket($I, self::DEFAULT_SAVEDBASKET);
+        $this->addProductToBasket($I, $defaultBasketId, self::PRODUCT_ID, 2);
+
+        //prepare ordering basket
+        $basketId = $this->createBasket($I, 'specialBasket');
+        $this->addProductToBasket($I, $basketId, self::PRODUCT_ID, 2);
+        $this->setBasketDeliveryMethod($I, $basketId, self::TEST_SHIPPING);
+        $this->setBasketPaymentMethod($I, $basketId, self::PAYMENT_TEST);
+
+        $this->ensureBasketExist($I, $basketId, self::CHECKOUT_USERNAME);
+        $this->ensureBasketExist($I, $defaultBasketId, self::CHECKOUT_USERNAME);
+
+        //place the order
+        $this->placeOrder($I, $basketId);
+
+        //both baskets removed
+        $this->ensureBasketDoesNotExist($I, $basketId, self::CHECKOUT_USERNAME);
+        $this->ensureBasketExist($I, $defaultBasketId, self::CHECKOUT_USERNAME);
     }
 
     public function placeOrderUsingDeliveryAddress(AcceptanceTester $I): void
@@ -114,7 +141,7 @@ final class PlaceOrderCest extends PlaceOrderBaseCest
         $I->assertNotEmpty($orders['deliveryAddress']);
 
         //remove basket
-        $this->ensureBasketDoesNotExists($I, $basketId, self::USERNAME);
+        $this->ensureBasketDoesNotExist($I, $basketId, self::USERNAME);
     }
 
     public function placeOrderWithoutToken(AcceptanceTester $I): void
@@ -274,7 +301,7 @@ final class PlaceOrderCest extends PlaceOrderBaseCest
         $I->assertEquals($basketCosts['discount'], $orders['cost']['discount']);
         $I->assertEquals($basketCosts['voucher'], $orders['cost']['voucher']);
 
-        $this->ensureBasketDoesNotExists($I, $basketId, self::USERNAME);
+        $this->ensureBasketDoesNotExist($I, $basketId, self::USERNAME);
 
         $I->updateInDatabase('oxdiscount', ['oxactive' => 0]);
         $I->updateInDatabase('oxdiscount', ['oxactive' => 1], ['oxid' => self::DEFAULT_DISCOUNT_ID]);
@@ -311,7 +338,7 @@ final class PlaceOrderCest extends PlaceOrderBaseCest
         $I->assertEquals($orderId, $orders['id']);
         $I->assertEquals($basketCosts['total'], $orders['cost']['total']);
 
-        $this->ensureBasketDoesNotExists($I, $basketId, self::USERNAME);
+        $this->ensureBasketDoesNotExist($I, $basketId, self::USERNAME);
     }
 
     /**
@@ -339,7 +366,7 @@ final class PlaceOrderCest extends PlaceOrderBaseCest
         $I->assertEquals($orders['id'], $orderId);
         $I->assertEquals($orders['cost']['total'], 41.3);
 
-        $this->ensureBasketDoesNotExists($I, $basketId, self::USERNAME);
+        $this->ensureBasketDoesNotExist($I, $basketId, self::USERNAME);
         $I->updateConfigInDatabase('blConfirmAGB', false);
     }
 
@@ -448,7 +475,7 @@ final class PlaceOrderCest extends PlaceOrderBaseCest
         $I->assertEquals($orders['id'], $orderId);
         $I->assertEquals($orders['cost']['total'], 41.3);
 
-        $this->ensureBasketDoesNotExists($I, $basketId, self::USERNAME);
+        $this->ensureBasketDoesNotExist($I, $basketId, self::USERNAME);
     }
 
     /**

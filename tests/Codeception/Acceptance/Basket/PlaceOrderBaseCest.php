@@ -297,24 +297,6 @@ abstract class PlaceOrderBaseCest extends BaseCest
         $this->ensureBasketCode($I, $basketId, $username, HttpCode::NOT_FOUND);
     }
 
-    private function ensureBasketCode(AcceptanceTester $I, string $basketId, string $username, int $code): void
-    {
-        $I->login($username, self::PASSWORD);
-
-        $variables = [
-            'basketId' => $basketId,
-        ];
-
-        $query = 'query ($basketId: String!){
-            basket (id: $basketId) {
-                id
-            }
-        }';
-
-        $I->sendGQLQuery($query, $variables);
-        $I->seeResponseCodeIs($code);
-    }
-
     protected function removeBasket(AcceptanceTester $I, string $basketId, string $username): void
     {
         $I->login($username, self::PASSWORD);
@@ -436,5 +418,23 @@ abstract class PlaceOrderBaseCest extends BaseCest
         $result = $this->getGQLResponse($I, $query, $variables);
 
         return $result['data']['basket']['cost'];
+    }
+
+    private function ensureBasketCode(AcceptanceTester $I, string $basketId, string $username, int $code): void
+    {
+        $I->login($username, self::PASSWORD);
+
+        $variables = [
+            'basketId' => $basketId,
+        ];
+
+        $query = 'query ($basketId: String!){
+            basket (id: $basketId) {
+                id
+            }
+        }';
+
+        $I->sendGQLQuery($query, $variables);
+        $I->seeResponseCodeIs($code);
     }
 }

@@ -5,6 +5,8 @@
 
 This module provides checkout related [GraphQL](https://www.graphql.org) queries and mutations for the [OXID eShop](https://www.oxid-esales.com/)
 
+This module is not maintained anymore. Hava a look at new module that have all the functionality of this one and more: https://github.com/OXID-eSales/graphql-storefront-module
+
 ## Usage
 
 This assumes you have OXID eShop (at least `oxid-esales/oxideshop_ce: v6.5.0` component, which is part of the `v6.2.0` compilation) up and running.
